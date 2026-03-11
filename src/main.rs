@@ -3,6 +3,7 @@
 use clap::{Parser, Subcommand};
 
 use std::{
+    fs::{self},
     io::{BufWriter, Result, Write, stdout},
     time::{Duration, Instant},
 };
@@ -11,7 +12,7 @@ use crossterm::{
     ExecutableCommand, QueueableCommand, cursor,
     event::{self, Event, KeyCode},
     style::{Color, ResetColor, SetBackgroundColor},
-    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{self, Clear, EnterAlternateScreen, LeaveAlternateScreen},
 };
 
 #[derive(Parser, Debug)]
@@ -31,9 +32,59 @@ struct RomFileArgs {
     path: String,
 }
 
+const SET_REGISTER_MASK: u16 = 0x0600;
+const SET_I_REG_MASK: u16 = 0xa000;
+const LOAD_TO_REG_MASK: u16 = 0x6000;
+
+#[derive(Debug)]
+struct LoadValueToRegister {
+    register: u8,
+    value: u16,
+}
+
+#[derive(Debug)]
+enum Instruction {
+    Clear,
+    Return,
+    SetIRegister(u16),
+    LoadValueToRegister(LoadValueToRegister),
+}
+
+fn matches_by_mask(value: u16, mask: u16) -> bool {
+    return (value & mask) == mask;
+}
+
 fn main() -> Result<()> {
     let cli = Cli::parse();
-    let Commands::FromRomFile(RomFileArgs { .. }) = &cli.command;
+    let Commands::FromRomFile(RomFileArgs { path }) = &cli.command;
+
+    let instructions: Vec<Option<Instruction>> = fs::read(path)?
+        .chunks_exact(2)
+        .map(|pair| {
+            let instruction = ((pair[0] as u16) << 8) | (pair[1] as u16);
+            match instruction {
+                0x00e0 => Some(Instruction::Clear),
+                0x00ee => Some(Instruction::Return),
+                instr if matches_by_mask(instr, SET_I_REG_MASK) => {
+                    let value = instr & 0x0fff;
+                    Some(Instruction::SetIRegister(value))
+                }
+                instr if matches_by_mask(instr, SET_REGISTER_MASK) => {
+                    let register = ((instr & 0x0f00) >> 8) as u8;
+                    let value = instr & 0xff;
+                    Some(Instruction::LoadValueToRegister(LoadValueToRegister {
+                        register,
+                        value,
+                    }))
+                }
+                _ => None,
+            }
+        })
+        .collect();
+
+    for instr in instructions {
+        println!("{:?}", instr);
+    }
 
     let mut stdout = BufWriter::new(stdout());
 
