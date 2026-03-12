@@ -4,9 +4,19 @@ use std::io::{Error, ErrorKind, Result};
 impl Chip8 {
     pub fn decode_instruction(&self, opcode: u16) -> Result<Instruction> {
         match opcode {
-            0x00e0 => Ok(Instruction::ClearScreen),
+            0x00E0 => Ok(Instruction::ClearScreen),
+            code if (code & 0xF000) == 0x2000 => Ok(Instruction::CallSubroutine {
+                address: (code & 0xfff),
+            }),
+            0x00EE => Ok(Instruction::ReturnFromSubroutine),
             code if (code & 0xF000) == 0x3000 => {
                 Ok(Instruction::SkipNextIfRegisterXEqualsImmediate {
+                    x_register: ((code & 0x0f00) >> 8) as u8,
+                    value: (code & 0xff) as u8,
+                })
+            }
+            code if (code & 0xF000) == 0x4000 => {
+                Ok(Instruction::SkipNextIfRegisterXNotEqualsImmediate {
                     x_register: ((code & 0x0f00) >> 8) as u8,
                     value: (code & 0xff) as u8,
                 })
@@ -46,6 +56,14 @@ impl Chip8 {
                 x_register: ((code & 0x0f00) >> 8) as u8,
                 y_register: ((code & 0x00f0) >> 4) as u8,
             }),
+            code if (code & 0xF00F) == 0x8001 => Ok(Instruction::OrRegisterXWithRegisterY {
+                x_register: ((code & 0x0f00) >> 8) as u8,
+                y_register: ((code & 0x00f0) >> 4) as u8,
+            }),
+            code if (code & 0xF00F) == 0x8002 => Ok(Instruction::AndRegisterXWithRegisterY {
+                x_register: ((code & 0x0f00) >> 8) as u8,
+                y_register: ((code & 0x00f0) >> 4) as u8,
+            }),
             code if (code & 0xF00F) == 0x8003 => Ok(Instruction::XorRegisterXWithRegisterY {
                 x_register: ((code & 0x0f00) >> 8) as u8,
                 y_register: ((code & 0x00f0) >> 4) as u8,
@@ -58,7 +76,24 @@ impl Chip8 {
                 x_register: ((code & 0x0f00) >> 8) as u8,
                 y_register: ((code & 0x00f0) >> 4) as u8,
             }),
+            code if (code & 0xF00F) == 0x8006 => {
+                Ok(Instruction::ShiftRegisterXRightWithRegisterY {
+                    x_register: ((code & 0x0f00) >> 8) as u8,
+                    y_register: ((code & 0x00f0) >> 4) as u8,
+                })
+            }
+            code if (code & 0xF00F) == 0x800E => Ok(Instruction::ShiftRegisterXLeftWithRegisterY {
+                x_register: ((code & 0x0f00) >> 8) as u8,
+                y_register: ((code & 0x00f0) >> 4) as u8,
+            }),
+            code if (code & 0xF00F) == 0x8007 => Ok(Instruction::SubtractNRegisterXFromRegisterY {
+                x_register: ((code & 0x0f00) >> 8) as u8,
+                y_register: ((code & 0x00f0) >> 4) as u8,
+            }),
             code if (code & 0xF0FF) == 0xF01E => Ok(Instruction::AddRegisterXToImmediate {
+                x_register: ((code & 0x0f00) >> 8) as u8,
+            }),
+            code if (code & 0xF0FF) == 0xF033 => Ok(Instruction::StoreBcdOfRegisterXAtIndex {
                 x_register: ((code & 0x0f00) >> 8) as u8,
             }),
             code if (code & 0xF0FF) == 0xF055 => Ok(Instruction::SaveNumRegistersToImediate {

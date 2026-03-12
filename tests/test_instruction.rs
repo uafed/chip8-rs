@@ -58,6 +58,30 @@ fn add_immediate_to_register_works() {
 }
 
 #[test]
+fn add_immediate_to_register_works_with_overflow() {
+    let mut chip8 = Chip8::new_from_program(&[0x7109]);
+
+    chip8.general_registers[1] = 255;
+
+    chip8.tick().unwrap();
+
+    assert_eq!(
+        chip8.current_instruction,
+        Some(Instruction::AddImmediateToRegister {
+            register: 1,
+            value: 0x09
+        })
+    );
+    for (i, &value) in chip8.general_registers.iter().enumerate() {
+        if i == 1 {
+            assert_eq!(value, 0x08);
+        } else {
+            assert_eq!(value, 0x00);
+        }
+    }
+}
+
+#[test]
 fn load_immediate_to_index_register_works() {
     let mut chip8 = Chip8::new_from_program(&[0xA123]);
 
@@ -247,6 +271,28 @@ fn subtract_register_y_from_register_x_works() {
 }
 
 #[test]
+fn subtract_register_y_from_register_x_works_with_overflow() {
+    let mut chip8 = Chip8::new_from_program(&[0x8235]);
+
+    chip8.general_registers[2] = 24;
+    chip8.general_registers[3] = 25;
+
+    chip8.tick().unwrap();
+
+    assert_eq!(
+        chip8.current_instruction,
+        Some(Instruction::SubtractRegisterYFromRegisterX {
+            x_register: 2,
+            y_register: 3
+        })
+    );
+
+    assert_eq!(chip8.general_registers[2], 255);
+    assert_eq!(chip8.general_registers[3], 25);
+    assert_eq!(chip8.get_flag_register(), 0);
+}
+
+#[test]
 fn subtract_register_y_from_register_x_with_borrom_works() {
     let mut chip8 = Chip8::new_from_program(&[0x8235]);
 
@@ -263,7 +309,7 @@ fn subtract_register_y_from_register_x_with_borrom_works() {
         })
     );
 
-    assert_eq!(chip8.general_registers[2], 0);
+    assert_eq!(chip8.general_registers[2], 238);
     assert_eq!(chip8.general_registers[3], 42);
     assert_eq!(chip8.get_flag_register(), 0);
 }
@@ -421,4 +467,46 @@ fn skip_next_if_register_x_not_equals_register_y_works_if_equal() {
     assert_eq!(chip8.general_registers[2], 0xfe);
     assert_eq!(chip8.general_registers[3], 0xfe);
     assert_eq!(chip8.program_counter, PROGRAM_START_OFFSET as u16 + 2);
+}
+
+#[test]
+fn or_register_x_with_register_y_works() {
+    let mut chip8 = Chip8::new_from_program(&[0x8231]);
+
+    chip8.general_registers[2] = 0b01000001;
+    chip8.general_registers[3] = 0b11000010;
+
+    chip8.tick().unwrap();
+
+    assert_eq!(
+        chip8.current_instruction,
+        Some(Instruction::OrRegisterXWithRegisterY {
+            x_register: 2,
+            y_register: 3
+        })
+    );
+
+    assert_eq!(chip8.general_registers[2], 0b11000011);
+    assert_eq!(chip8.general_registers[3], 0b11000010);
+}
+
+#[test]
+fn and_register_x_with_register_y_works() {
+    let mut chip8 = Chip8::new_from_program(&[0x8232]);
+
+    chip8.general_registers[2] = 0b01010101;
+    chip8.general_registers[3] = 0b10101011;
+
+    chip8.tick().unwrap();
+
+    assert_eq!(
+        chip8.current_instruction,
+        Some(Instruction::AndRegisterXWithRegisterY {
+            x_register: 2,
+            y_register: 3
+        })
+    );
+
+    assert_eq!(chip8.general_registers[2], 0b00000001);
+    assert_eq!(chip8.general_registers[3], 0b10101011);
 }

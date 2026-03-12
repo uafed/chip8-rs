@@ -10,7 +10,15 @@ pub enum Instruction {
         register: u8,
         value: u8,
     },
+    CallSubroutine {
+        address: u16,
+    },
+    ReturnFromSubroutine,
     SkipNextIfRegisterXEqualsImmediate {
+        x_register: u8,
+        value: u8,
+    },
+    SkipNextIfRegisterXNotEqualsImmediate {
         x_register: u8,
         value: u8,
     },
@@ -44,6 +52,14 @@ pub enum Instruction {
         x_register: u8,
         y_register: u8,
     },
+    OrRegisterXWithRegisterY {
+        x_register: u8,
+        y_register: u8,
+    },
+    AndRegisterXWithRegisterY {
+        x_register: u8,
+        y_register: u8,
+    },
     XorRegisterXWithRegisterY {
         x_register: u8,
         y_register: u8,
@@ -55,6 +71,21 @@ pub enum Instruction {
     SubtractRegisterYFromRegisterX {
         x_register: u8,
         y_register: u8,
+    },
+    ShiftRegisterXRightWithRegisterY {
+        x_register: u8,
+        y_register: u8,
+    },
+    ShiftRegisterXLeftWithRegisterY {
+        x_register: u8,
+        y_register: u8,
+    },
+    SubtractNRegisterXFromRegisterY {
+        x_register: u8,
+        y_register: u8,
+    },
+    StoreBcdOfRegisterXAtIndex {
+        x_register: u8,
     },
     SaveNumRegistersToImediate {
         n_registers: u8,
@@ -73,6 +104,7 @@ pub struct Chip8 {
     pub index_register: u16,
     pub memory: [u8; 4096],
     pub program_counter: u16,
+    pub stack_memory: [u16; 16],
     pub stack_pointer: u8,
     pub timer_register: u8,
 }
@@ -108,6 +140,7 @@ impl Chip8 {
             index_register: 0,
             memory: [0; 4096],
             program_counter: PROGRAM_START_OFFSET as u16,
+            stack_memory: [0; 16],
             stack_pointer: 0,
             timer_register: 0,
         };

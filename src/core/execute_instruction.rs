@@ -13,10 +13,25 @@ impl Chip8 {
                     }
                 }
             }
+            Instruction::CallSubroutine { address } => {
+                self.stack_pointer += 1;
+                self.stack_memory[self.stack_pointer as usize - 1] = self.program_counter;
+                self.program_counter = address;
+            }
+            Instruction::ReturnFromSubroutine => {
+                self.stack_pointer -= 1;
+                self.program_counter = self.stack_memory[self.stack_pointer as usize];
+            }
             Instruction::LoadImmediateToRegister { register, value } => {
                 self.general_registers[register as usize] = value;
             }
             Instruction::AddImmediateToRegister { register, value } => {
+                let current_value = self.general_registers[register as usize];
+                if value > 255 - current_value {
+                    let wrapped = value - (255 - current_value + 1);
+                    self.general_registers[register as usize] = wrapped;
+                    return;
+                }
                 self.general_registers[register as usize] += value;
             }
             Instruction::LoadImmediateToIndexRegister { value } => {
@@ -62,6 +77,20 @@ impl Chip8 {
             Instruction::AddRegisterXToImmediate { x_register } => {
                 self.index_register += self.general_registers[x_register as usize] as u16;
             }
+            Instruction::OrRegisterXWithRegisterY {
+                x_register,
+                y_register,
+            } => {
+                self.general_registers[x_register as usize] |=
+                    self.general_registers[y_register as usize];
+            }
+            Instruction::AndRegisterXWithRegisterY {
+                x_register,
+                y_register,
+            } => {
+                self.general_registers[x_register as usize] &=
+                    self.general_registers[y_register as usize];
+            }
             Instruction::XorRegisterXWithRegisterY {
                 x_register,
                 y_register,
@@ -97,7 +126,8 @@ impl Chip8 {
                 let x_value = self.general_registers[x_register as usize];
 
                 if y_value > 255 - x_value {
-                    self.general_registers[x_register as usize] = 0;
+                    let wrapped = y_value - (255 - x_value + 1);
+                    self.general_registers[x_register as usize] = wrapped;
                     self.general_registers[self.general_registers.len() - 1] = 1;
                     return;
                 }
@@ -112,14 +142,64 @@ impl Chip8 {
                 let y_value = self.general_registers[y_register as usize];
                 let x_value = self.general_registers[x_register as usize];
 
-                if x_value > y_value {
-                    self.general_registers[self.general_registers.len() - 1] = 1;
-                    self.general_registers[x_register as usize] -= y_value;
+                self.general_registers[self.general_registers.len() - 1] =
+                    if x_value > y_value { 1 } else { 0 };
+
+                if y_value > x_value {
+                    // underflow
+                    let wrapped = 255 - (y_value - x_value - 1);
+                    self.general_registers[x_register as usize] = wrapped;
+                    return;
+                }
+                self.general_registers[x_register as usize] -= y_value;
+            }
+            Instruction::ShiftRegisterXRightWithRegisterY {
+                x_register,
+                y_register,
+            } => {
+                let y_value = self.general_registers[y_register as usize];
+                let lowest_bit = y_value & 1;
+
+                self.general_registers[self.general_registers.len() - 1] = lowest_bit;
+                self.general_registers[x_register as usize] = y_value >> 1;
+            }
+            Instruction::ShiftRegisterXLeftWithRegisterY {
+                x_register,
+                y_register,
+            } => {
+                let y_value = self.general_registers[y_register as usize];
+                let lowest_bit = (y_value & 80) >> 7;
+
+                self.general_registers[self.general_registers.len() - 1] = lowest_bit;
+                self.general_registers[x_register as usize] = y_value << 1;
+            }
+            Instruction::SubtractNRegisterXFromRegisterY {
+                x_register,
+                y_register,
+            } => {
+                let y_value = self.general_registers[y_register as usize];
+                let x_value = self.general_registers[x_register as usize];
+
+                self.general_registers[self.general_registers.len() - 1] =
+                    if y_value > x_value { 1 } else { 0 };
+
+                if y_value < x_value {
+                    let wrapped = 255 - (x_value - y_value - 1);
+                    self.general_registers[x_register as usize] = wrapped;
                     return;
                 }
 
-                self.general_registers[self.general_registers.len() - 1] = 0;
-                self.general_registers[x_register as usize] = 0;
+                self.general_registers[x_register as usize] = y_value - x_value;
+            }
+            Instruction::StoreBcdOfRegisterXAtIndex { x_register } => {
+                let value = self.general_registers[x_register as usize];
+                let hundreds = (value / 100) % 10;
+                let tens = (value / 10) % 10;
+                let ones = value % 10;
+
+                self.memory[self.index_register as usize] = hundreds;
+                self.memory[self.index_register as usize + 1] = tens;
+                self.memory[self.index_register as usize + 2] = ones;
             }
             Instruction::SaveNumRegistersToImediate { n_registers } => {
                 for i in 0..n_registers + 1 {
@@ -135,6 +215,11 @@ impl Chip8 {
             }
             Instruction::SkipNextIfRegisterXEqualsImmediate { x_register, value } => {
                 if self.general_registers[x_register as usize] == value {
+                    self.program_counter += 2;
+                }
+            }
+            Instruction::SkipNextIfRegisterXNotEqualsImmediate { x_register, value } => {
+                if self.general_registers[x_register as usize] != value {
                     self.program_counter += 2;
                 }
             }
