@@ -5,3 +5,12 @@ This is a re-implementation of a previous project that I worked on in order to l
 The GIF below shows the IBM Logo ROM from the [Chip 8 test suite](https://github.com/Timendus/chip8-test-suite?tab=readme-ov-file). This is in progress since a lot of the instructions are not yet supported. The GIF also shows the performance with the FPS capped to a lower value just for inspection.
 
 ![IBM Logo demo](demo/output.gif)
+
+## Grammar
+
+```plaintext
+program   | fn <identifier>(<params list>) { <statement list> } |         |
+args list | <identifier>: <type name>(, <args list>)?           | <empty> |
+statement | <expression>; | if (<expression>) { <statements> } | <identifier>(<args list>)
+expression 
+```
