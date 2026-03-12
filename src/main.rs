@@ -18,7 +18,7 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     let Commands::FromRomFile(RomFileArgs { path }) = &cli.command;
 
-    let fps_target = 10;
+    let fps_target = 1;
     let ms_per_frame_target = Duration::from_millis(1000 / fps_target);
     let (terminal_w, terminal_h) = terminal::size()?;
 
@@ -34,6 +34,8 @@ fn main() -> Result<()> {
     terminal::enable_raw_mode()?;
     stdout.execute(EnterAlternateScreen)?;
     stdout.execute(cursor::Hide)?;
+
+    let sidebar_width = 32;
 
     loop {
         let start = Instant::now();
@@ -66,24 +68,33 @@ fn main() -> Result<()> {
 
         for (index, value) in chip8.general_registers.iter().enumerate() {
             stdout.queue(cursor::MoveTo(start_x + frame_w, start_y + index as u16))?;
-            let output = format!("V{:<2} = {1:#06x} ({1})", index, value);
-            write!(stdout, "{:<width$}", output, width = 24)?;
+            let output = format!("V{:<2} = {1:#06X} ({1})", index, value);
+            write!(stdout, "{:<width$}", output, width = sidebar_width)?;
         }
 
+        let instruction_label = "INS = ";
+        let instruction_text = if let Some(instruction) = chip8.current_instruction {
+            format!("{}", instruction)
+                .chars()
+                .take(sidebar_width - instruction_label.len())
+                .collect::<String>()
+        } else {
+            "<None>".to_string()
+        };
         let other_registers = [
             String::from("-------"),
-            format!("PC  = {0:#06x} ({0})", chip8.program_counter),
-            format!("INS = {0:#06x} ({0})", chip8.current_instruction),
-            format!("IR  = {0:#06x} ({0})", chip8.index_register),
-            format!("DR  = {0:#06x} ({0})", chip8.delay_register),
-            format!("TR  = {0:#06x} ({0})", chip8.timer_register),
+            format!("PC  = {0:#06X} ({0})", chip8.program_counter),
+            format!("{}{}", instruction_label, instruction_text),
+            format!("IR  = {0:#06X} ({0})", chip8.index_register),
+            format!("DR  = {0:#06X} ({0})", chip8.delay_register),
+            format!("TR  = {0:#06X} ({0})", chip8.timer_register),
         ];
         for (index, value) in other_registers.iter().enumerate() {
             stdout.queue(cursor::MoveTo(
                 start_x + frame_w,
                 start_y + chip8.general_registers.len() as u16 + index as u16,
             ))?;
-            write!(stdout, "{:<width$}", value, width = 24)?;
+            write!(stdout, "{:<width$}", value, width = sidebar_width)?;
         }
 
         stdout.queue(ResetColor)?;
