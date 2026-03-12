@@ -31,7 +31,7 @@ pub enum Instruction {
         value: u8,
     },
     LoadImmediateToIndexRegister {
-        value: u16,
+        address: u16,
     },
     DrawSpriteToScreen {
         x_register: u8,

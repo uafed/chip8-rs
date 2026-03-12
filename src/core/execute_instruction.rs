@@ -4,6 +4,7 @@ impl Chip8 {
     pub fn get_flag_register(&self) -> u8 {
         self.general_registers[self.general_registers.len() - 1]
     }
+
     pub fn execute_instruction(&mut self, instruction: Instruction) {
         match instruction {
             Instruction::ClearScreen => {
@@ -22,26 +23,20 @@ impl Chip8 {
                 self.stack_pointer -= 1;
                 self.program_counter = self.stack_memory[self.stack_pointer as usize];
             }
-            Instruction::LoadImmediateToRegister {
-                x_register: register,
-                value,
-            } => {
-                self.general_registers[register as usize] = value;
+            Instruction::LoadImmediateToRegister { x_register, value } => {
+                self.general_registers[x_register as usize] = value;
             }
-            Instruction::AddImmediateToRegister {
-                x_register: register,
-                value,
-            } => {
-                let current_value = self.general_registers[register as usize];
+            Instruction::AddImmediateToRegister { x_register, value } => {
+                let current_value = self.general_registers[x_register as usize];
                 if value > 255 - current_value {
                     let wrapped = value - (255 - current_value + 1);
-                    self.general_registers[register as usize] = wrapped;
+                    self.general_registers[x_register as usize] = wrapped;
                     return;
                 }
-                self.general_registers[register as usize] += value;
+                self.general_registers[x_register as usize] += value;
             }
-            Instruction::LoadImmediateToIndexRegister { value } => {
-                self.index_register = value;
+            Instruction::LoadImmediateToIndexRegister { address } => {
+                self.index_register = address;
             }
             Instruction::DrawSpriteToScreen {
                 x_register,

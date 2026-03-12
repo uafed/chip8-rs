@@ -89,7 +89,7 @@ fn load_immediate_to_index_register_works() {
 
     assert_eq!(
         chip8.current_instruction,
-        Some(Instruction::LoadImmediateToIndexRegister { value: 0x123 })
+        Some(Instruction::LoadImmediateToIndexRegister { address: 0x123 })
     );
     assert_eq!(chip8.index_register, 0x123);
 }

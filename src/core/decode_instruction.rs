@@ -2,6 +2,44 @@ use crate::{Chip8, core::Instruction};
 use std::io::{Error, ErrorKind, Result};
 
 impl Chip8 {
+    pub fn decode_instruction(&self, opcode: u16) -> Result<Instruction> {
+        // Constant or one-off patterns
+        match opcode {
+            0x00E0 => return Ok(Instruction::ClearScreen),
+            0x00EE => return Ok(Instruction::ReturnFromSubroutine),
+            code if (code & 0xF000) == 0xD000 => {
+                return Ok(Instruction::DrawSpriteToScreen {
+                    x_register: ((code & 0x0f00) >> 8) as u8,
+                    y_register: ((code & 0x00f0) >> 4) as u8,
+                    n_rows: (code & 0xf) as u8,
+                });
+            }
+            _ => {}
+        };
+
+        if let Some(instruction) = self.takes_an_x_register(opcode) {
+            return Ok(instruction);
+        }
+        if let Some(instruction) = self.takes_x_register_and_byte(opcode) {
+            return Ok(instruction);
+        }
+        if let Some(instruction) = self.takes_an_address(opcode) {
+            return Ok(instruction);
+        }
+        if let Some(instruction) = self.takes_x_and_y_register(opcode) {
+            return Ok(instruction);
+        }
+
+        return Err(Error::new(
+            ErrorKind::Other,
+            format!(
+                "Unrecognized instruction: {opcode:#06X} {0} ({0:#06X})",
+                self.program_counter - 2,
+            )
+            .to_owned(),
+        ));
+    }
+
     fn takes_x_register_and_byte(&self, opcode: u16) -> Option<Instruction> {
         let x_register = ((opcode & 0x0F00) >> 8) as u8;
         let value = (opcode & 0xFF) as u8;
@@ -24,7 +62,7 @@ impl Chip8 {
         match code {
             0x1000 => Some(Instruction::JumpToAddress { address }),
             0x2000 => Some(Instruction::CallSubroutine { address }),
-            0xA000 => Some(Instruction::LoadImmediateToIndexRegister { value: address }),
+            0xA000 => Some(Instruction::LoadImmediateToIndexRegister { address }),
             _ => None,
         }
     }
@@ -98,43 +136,5 @@ impl Chip8 {
             }),
             _ => None,
         }
-    }
-
-    pub fn decode_instruction(&self, opcode: u16) -> Result<Instruction> {
-        // Constant or one-off patterns
-        match opcode {
-            0x00E0 => return Ok(Instruction::ClearScreen),
-            0x00EE => return Ok(Instruction::ReturnFromSubroutine),
-            code if (code & 0xF000) == 0xD000 => {
-                return Ok(Instruction::DrawSpriteToScreen {
-                    x_register: ((code & 0x0f00) >> 8) as u8,
-                    y_register: ((code & 0x00f0) >> 4) as u8,
-                    n_rows: (code & 0xf) as u8,
-                });
-            }
-            _ => {}
-        };
-
-        if let Some(instruction) = self.takes_an_x_register(opcode) {
-            return Ok(instruction);
-        }
-        if let Some(instruction) = self.takes_x_register_and_byte(opcode) {
-            return Ok(instruction);
-        }
-        if let Some(instruction) = self.takes_an_address(opcode) {
-            return Ok(instruction);
-        }
-        if let Some(instruction) = self.takes_x_and_y_register(opcode) {
-            return Ok(instruction);
-        }
-
-        return Err(Error::new(
-            ErrorKind::Other,
-            format!(
-                "Unrecognized instruction: {opcode:#06X} {0} ({0:#06X})",
-                self.program_counter - 2,
-            )
-            .to_owned(),
-        ));
     }
 }
