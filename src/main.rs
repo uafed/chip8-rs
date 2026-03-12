@@ -18,16 +18,13 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     let Commands::FromRomFile(RomFileArgs { path }) = &cli.command;
 
-    let (terminal_w, terminal_h) = terminal::size()?;
-
     let mut chip8 = Chip8::new_from_program_file(path)?;
     let mut stdout = BufWriter::new(stdout());
 
-    let frame_h = chip8.frame_buffer.len() as u16;
-    let start_y = (terminal_h - frame_h) / 2;
+    let start_x = 0;
+    let start_y = 0;
 
     let frame_w = chip8.frame_buffer[0].len() as u16;
-    let start_x = (terminal_w - frame_w) / 2;
 
     terminal::enable_raw_mode()?;
     stdout.execute(EnterAlternateScreen)?;
@@ -51,7 +48,7 @@ fn main() -> Result<()> {
         }
 
         for (y, row) in chip8.frame_buffer.iter().enumerate() {
-            stdout.queue(cursor::MoveTo(start_x + 0, start_y + y as u16))?;
+            stdout.queue(cursor::MoveTo(start_x, start_y + y as u16))?;
             for &pixel in row {
                 let color = if pixel > 0 {
                     Color::White
@@ -60,11 +57,15 @@ fn main() -> Result<()> {
                 };
                 stdout.queue(SetBackgroundColor(color))?;
                 stdout.write_all(b" ")?;
+                stdout.write_all(b" ")?;
             }
         }
 
         for (index, value) in chip8.general_registers.iter().enumerate() {
-            stdout.queue(cursor::MoveTo(start_x + frame_w, start_y + index as u16))?;
+            stdout.queue(cursor::MoveTo(
+                start_x + frame_w * 2,
+                start_y + index as u16,
+            ))?;
             let output = format!("V{:<2} = {1:#06X} ({1})", index, value);
             write!(stdout, "{:<width$}", output, width = sidebar_width)?;
         }
@@ -88,7 +89,7 @@ fn main() -> Result<()> {
         ];
         for (index, value) in other_registers.iter().enumerate() {
             stdout.queue(cursor::MoveTo(
-                start_x + frame_w,
+                start_x + frame_w * 2,
                 start_y + chip8.general_registers.len() as u16 + index as u16,
             ))?;
             write!(stdout, "{:<width$}", value, width = sidebar_width)?;
