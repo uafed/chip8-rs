@@ -4,7 +4,7 @@ use clap::Parser;
 
 use std::{
     io::{BufWriter, Result, Write, stdout},
-    time::{Duration, Instant},
+    time::Duration,
 };
 
 use crossterm::{
@@ -18,8 +18,6 @@ fn main() -> Result<()> {
     let cli = Cli::parse();
     let Commands::FromRomFile(RomFileArgs { path }) = &cli.command;
 
-    let fps_target = 1;
-    let ms_per_frame_target = Duration::from_millis(1000 / fps_target);
     let (terminal_w, terminal_h) = terminal::size()?;
 
     let mut chip8 = Chip8::new_from_program_file(path)?;
@@ -38,7 +36,6 @@ fn main() -> Result<()> {
     let sidebar_width = 32;
 
     loop {
-        let start = Instant::now();
         if event::poll(Duration::ZERO)? {
             match event::read()? {
                 Event::Key(k) if k.code == KeyCode::Char('q') => break,
@@ -99,12 +96,6 @@ fn main() -> Result<()> {
 
         stdout.queue(ResetColor)?;
         stdout.flush()?;
-
-        let elapsed = start.elapsed();
-
-        if elapsed < ms_per_frame_target {
-            std::thread::sleep(ms_per_frame_target - elapsed);
-        }
     }
 
     terminal::disable_raw_mode()?;

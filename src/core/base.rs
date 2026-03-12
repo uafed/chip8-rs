@@ -10,6 +10,14 @@ pub enum Instruction {
         register: u8,
         value: u8,
     },
+    SkipNextIfRegisterXEqualsImmediate {
+        x_register: u8,
+        value: u8,
+    },
+    SkipNextIfRegisterYNotEqualRegisterX {
+        x_register: u8,
+        y_register: u8,
+    },
     AddImmediateToRegister {
         register: u8,
         value: u8,
@@ -25,26 +33,36 @@ pub enum Instruction {
     JumpToAddress {
         address: u16,
     },
+    LoadRegisterYToRegisterX {
+        x_register: u8,
+        y_register: u8,
+    },
+    AddRegisterXToImmediate {
+        x_register: u8,
+    },
+    SkipNextIfRegisterXEqualsRegisterY {
+        x_register: u8,
+        y_register: u8,
+    },
+    XorRegisterXWithRegisterY {
+        x_register: u8,
+        y_register: u8,
+    },
+    AddRegisterYToRegisterX {
+        x_register: u8,
+        y_register: u8,
+    },
+    SubtractRegisterYFromRegisterX {
+        x_register: u8,
+        y_register: u8,
+    },
+    SaveNumRegistersToImediate {
+        n_registers: u8,
+    },
+    SaveImmediateToNumRegisters {
+        n_registers: u8,
+    },
 }
-
-pub const SET_INDEX_REGISTER: u16 = 0xa000;
-pub const JUMP_TO_ROUTINE_MASK: u16 = 0x0;
-pub const LOAD_TO_REGISTER: u16 = 0x6000;
-pub const JUMP_TO_ADDRESS: u16 = 0x1000;
-pub const DISPLAY_N_BYTE_SPRITE: u16 = 0xd000;
-pub const ADD_VALUE_TO_REGISTER: u16 = 0x7000;
-pub const ADD_VALUE_TO_INDEX_REGISTER: u16 = 0xf01e;
-pub const LOAD_REG_X_TO_REG_Y_MASK: u16 = 0x8000;
-pub const XOR_REGISTERS_X_AND_Y: u16 = 0x8003;
-pub const ADD_WITH_CARRY: u16 = 0x8004;
-pub const SUBTRACT_WITH_BORROW: u16 = 0x8005;
-pub const SKIP_NEXT_IF_REGISTERS_ARE_EQUAL: u16 = 0x5000;
-pub const SKIP_NEXT_IF_REGISTERS_NOT_EQUAL: u16 = 0x9000;
-pub const SKIP_NEXT_IF_REGISTER_IS_EQUAL: u16 = 0x3000;
-pub const STORE_REGISTERS_TO_INDEX_ADDRESS: u16 = 0xf055;
-pub const LOAD_INDEX_ADDRESS_TO_REGISTERS: u16 = 0xf065;
-pub const SKIP_NEXT_IF_REG_NOT_EQUAL_MASK: u16 = 0x4000;
-pub const CALL_SUBROUTINE_WITH_INCREMENT_MASK: u16 = 0x2000;
 
 #[derive(Debug)]
 pub struct Chip8 {
@@ -143,7 +161,7 @@ impl Chip8 {
         let opcode = self.fetch_instruction();
         let instruction = self.decode_instruction(opcode)?;
         self.current_instruction = Some(instruction);
-        self.execute_instruction(instruction)?;
+        self.execute_instruction(instruction);
         Ok(())
     }
 }
