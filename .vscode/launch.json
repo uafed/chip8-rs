@@ -15,7 +15,7 @@
           "kind": "bin"
         }
       },
-      "args": ["from-rom-file", "./test-roms/3-corax+.ch8"],
+      "args": ["from-rom-file", "./test-roms/4-flags.ch8"],
       "cwd": "${workspaceFolder}"
     },
     {

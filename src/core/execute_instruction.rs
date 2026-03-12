@@ -22,10 +22,16 @@ impl Chip8 {
                 self.stack_pointer -= 1;
                 self.program_counter = self.stack_memory[self.stack_pointer as usize];
             }
-            Instruction::LoadImmediateToRegister { register, value } => {
+            Instruction::LoadImmediateToRegister {
+                x_register: register,
+                value,
+            } => {
                 self.general_registers[register as usize] = value;
             }
-            Instruction::AddImmediateToRegister { register, value } => {
+            Instruction::AddImmediateToRegister {
+                x_register: register,
+                value,
+            } => {
                 let current_value = self.general_registers[register as usize];
                 if value > 255 - current_value {
                     let wrapped = value - (255 - current_value + 1);
@@ -142,16 +148,16 @@ impl Chip8 {
                 let y_value = self.general_registers[y_register as usize];
                 let x_value = self.general_registers[x_register as usize];
 
-                self.general_registers[self.general_registers.len() - 1] =
-                    if x_value > y_value { 1 } else { 0 };
-
                 if y_value > x_value {
                     // underflow
                     let wrapped = 255 - (y_value - x_value - 1);
                     self.general_registers[x_register as usize] = wrapped;
                     return;
                 }
-                self.general_registers[x_register as usize] -= y_value;
+                self.general_registers[x_register as usize] = x_value - y_value;
+
+                self.general_registers[self.general_registers.len() - 1] =
+                    if x_value > y_value { 1 } else { 0 };
             }
             Instruction::ShiftRegisterXRightWithRegisterY {
                 x_register,

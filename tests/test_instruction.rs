@@ -22,7 +22,7 @@ fn load_immediate_to_register_works() {
     assert_eq!(
         chip8.current_instruction,
         Some(Instruction::LoadImmediateToRegister {
-            register: 1,
+            x_register: 1,
             value: 0xfe
         })
     );
@@ -44,7 +44,7 @@ fn add_immediate_to_register_works() {
     assert_eq!(
         chip8.current_instruction,
         Some(Instruction::AddImmediateToRegister {
-            register: 1,
+            x_register: 1,
             value: 0x09
         })
     );
@@ -68,7 +68,7 @@ fn add_immediate_to_register_works_with_overflow() {
     assert_eq!(
         chip8.current_instruction,
         Some(Instruction::AddImmediateToRegister {
-            register: 1,
+            x_register: 1,
             value: 0x09
         })
     );

@@ -8,10 +8,10 @@ impl fmt::Display for Instruction {
             Instruction::ClearScreen => write!(f, "CLEAR")?,
             Instruction::CallSubroutine { address } => write!(f, "CALL {0:#06X}", address)?,
             Instruction::ReturnFromSubroutine => write!(f, "RET")?,
-            Instruction::LoadImmediateToRegister { register, value } => {
+            Instruction::LoadImmediateToRegister { x_register: register, value } => {
                 write!(f, "LD V{0}, {1:#06X}", register, value)?
             }
-            Instruction::AddImmediateToRegister { register, value } => {
+            Instruction::AddImmediateToRegister { x_register: register, value } => {
                 write!(f, "ADD V{0}, {1:#06X}", register, value)?
             }
             Instruction::LoadImmediateToIndexRegister { value } => {

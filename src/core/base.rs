@@ -7,7 +7,7 @@ use std::{
 pub enum Instruction {
     ClearScreen,
     LoadImmediateToRegister {
-        register: u8,
+        x_register: u8,
         value: u8,
     },
     CallSubroutine {
@@ -27,7 +27,7 @@ pub enum Instruction {
         y_register: u8,
     },
     AddImmediateToRegister {
-        register: u8,
+        x_register: u8,
         value: u8,
     },
     LoadImmediateToIndexRegister {
