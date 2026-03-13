@@ -8,7 +8,8 @@ impl Chip8 {
                 self.general_registers[x_register as usize] = current_value.wrapping_add(value);
             }
             AddRegisterXToImmediate { x_register } => {
-                self.index_register += self.general_registers[x_register as usize] as u16;
+                let value = self.general_registers[x_register as usize] as u16;
+                self.index_register = self.index_register.wrapping_add(value);
             }
             AddRegisterYToRegisterX {
                 x_register,
@@ -17,8 +18,8 @@ impl Chip8 {
                 let y_value = self.general_registers[y_register as usize];
                 let x_value = self.general_registers[x_register as usize];
 
-                self.set_flag_register(y_value > 255 - x_value);
                 self.general_registers[x_register as usize] = x_value.wrapping_add(y_value);
+                self.set_flag_register(y_value > 255 - x_value);
             }
             SubtractRegisterYFromRegisterX {
                 x_register,
@@ -27,8 +28,8 @@ impl Chip8 {
                 let y_value = self.general_registers[y_register as usize];
                 let x_value = self.general_registers[x_register as usize];
 
-                self.set_flag_register(x_value > y_value);
                 self.general_registers[x_register as usize] = x_value.wrapping_sub(y_value);
+                self.set_flag_register(x_value >= y_value);
             }
             SubtractNRegisterXFromRegisterY {
                 x_register,
@@ -37,8 +38,8 @@ impl Chip8 {
                 let y_value = self.general_registers[y_register as usize];
                 let x_value = self.general_registers[x_register as usize];
 
-                self.set_flag_register(y_value > x_value);
                 self.general_registers[x_register as usize] = y_value.wrapping_sub(x_value);
+                self.set_flag_register(y_value >= x_value);
             }
         }
     }

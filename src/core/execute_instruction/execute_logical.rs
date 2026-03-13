@@ -31,18 +31,18 @@ impl Chip8 {
                 let y_value = self.general_registers[y_register as usize];
                 let lowest_bit = y_value & 1;
 
-                self.general_registers[self.general_registers.len() - 1] = lowest_bit;
                 self.general_registers[x_register as usize] = y_value >> 1;
+                self.set_flag_register(lowest_bit > 0);
             }
             ShiftRegisterXLeftWithRegisterY {
                 x_register,
                 y_register,
             } => {
                 let y_value = self.general_registers[y_register as usize];
-                let lowest_bit = (y_value & 80) >> 7;
+                let highest_bit = (y_value & 0x80) >> 7;
 
-                self.general_registers[self.general_registers.len() - 1] = lowest_bit;
                 self.general_registers[x_register as usize] = y_value << 1;
+                self.set_flag_register(highest_bit > 0);
             }
         }
     }
