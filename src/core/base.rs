@@ -4,6 +4,7 @@ use std::{
     time::Instant,
 };
 
+#[cfg(feature = "audio")]
 use rodio::{
     MixerDeviceSink, Player,
     source::{SineWave, Source},
@@ -102,8 +103,11 @@ pub struct Chip8 {
 
     pub(super) pending_key_press_dest: Option<u8>,
 
-    beep_player: Player,
-    _handle: MixerDeviceSink,
+    #[cfg(feature = "audio")]
+    beep_player: Option<Player>,
+
+    #[cfg(feature = "audio")]
+    _handle: Option<MixerDeviceSink>,
 }
 
 const SPRITES: [[u8; 5]; 16] = [
@@ -127,15 +131,24 @@ const SPRITES: [[u8; 5]; 16] = [
 
 pub const PROGRAM_START_OFFSET: usize = 0x200;
 
+// Prevent checks in CI from failing, we don't need audio to play there
+#[cfg(feature = "audio")]
+fn initialize_audio() -> (Option<MixerDeviceSink>, Option<Player>) {
+    let mut handle =
+        rodio::DeviceSinkBuilder::open_default_sink().expect("open default audio stream");
+    handle.log_on_drop(false);
+    let player = rodio::Player::connect_new(&handle.mixer());
+    let source = SineWave::new(440.0).repeat_infinite().amplify(0.20);
+    player.append(source);
+    player.pause();
+
+    (Some(handle), Some(player))
+}
+
 impl Chip8 {
     pub fn new() -> Self {
-        let mut handle =
-            rodio::DeviceSinkBuilder::open_default_sink().expect("open default audio stream");
-        handle.log_on_drop(false);
-        let player = rodio::Player::connect_new(&handle.mixer());
-        let source = SineWave::new(440.0).repeat_infinite().amplify(0.20);
-        player.append(source);
-        player.pause();
+        #[cfg(feature = "audio")]
+        let (handle, player) = initialize_audio();
 
         let mut instance = Self {
             current_instruction: None,
@@ -152,7 +165,11 @@ impl Chip8 {
             sound_timer: 0,
             delay_timer_reference: None,
             sound_timer_reference: None,
+
+            #[cfg(feature = "audio")]
             beep_player: player,
+
+            #[cfg(feature = "audio")]
             _handle: handle,
         };
 
@@ -238,6 +255,20 @@ impl Chip8 {
         }
     }
 
+    #[cfg(feature = "audio")]
+    fn play_sound(&self) {
+        if let Some(player) = &self.beep_player {
+            if self.sound_timer > 0 {
+                player.play();
+            } else {
+                player.pause();
+            }
+        }
+    }
+
+    #[cfg(not(feature = "audio"))]
+    fn play_sound(&self) {}
+
     fn handle_sound_timer(&mut self) -> Result<()> {
         if self.sound_timer == 0 {
             return Ok(());
@@ -247,11 +278,7 @@ impl Chip8 {
             let num_ticks_passed = (elapsed.as_secs_f32() * 60.0).round() as u8;
             self.sound_timer = self.sound_timer.checked_sub(num_ticks_passed).unwrap_or(0);
 
-            if self.sound_timer > 0 {
-                self.beep_player.play();
-            } else {
-                self.beep_player.pause();
-            }
+            self.play_sound();
         }
         Ok(())
     }
