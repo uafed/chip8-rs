@@ -1,4 +1,7 @@
-use nom::{IResult, Parser, branch::alt, bytes::complete::tag_no_case, sequence::separated_pair};
+use nom::{
+    IResult, Parser, branch::alt, bytes::complete::tag_no_case, combinator::map,
+    sequence::separated_pair,
+};
 
 use crate::{
     Arithmetic,
@@ -57,8 +60,17 @@ fn parse_add_two_general_registers(input: &str) -> IResult<&str, Arithmetic> {
     ))
 }
 
+enum Subtract {
+    Sub,
+    SubN,
+}
+
 fn parse_subtract_two_general_registers(input: &str) -> IResult<&str, Arithmetic> {
-    let (input, command) = alt((tag_no_case("sub"), tag_no_case("subn"))).parse(input)?;
+    let (input, command) = alt((
+        map(tag_no_case("sub"), |_| Subtract::Sub),
+        map(tag_no_case("subn"), |_| Subtract::SubN),
+    ))
+    .parse(input)?;
     let (input, (x_register, y_register)) = (separated_pair(
         parse_general_register,
         arguments_separator,
@@ -69,15 +81,14 @@ fn parse_subtract_two_general_registers(input: &str) -> IResult<&str, Arithmetic
     Ok((
         input,
         match command {
-            "subn" => Arithmetic::SubtractNRegisterXFromRegisterY {
+            Subtract::SubN => Arithmetic::SubtractNRegisterXFromRegisterY {
                 x_register,
                 y_register,
             },
-            "sub" => Arithmetic::SubtractRegisterYFromRegisterX {
+            Subtract::Sub => Arithmetic::SubtractRegisterYFromRegisterX {
                 x_register,
                 y_register,
             },
-            _ => unreachable!(),
         },
     ))
 }
