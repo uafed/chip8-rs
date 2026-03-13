@@ -15,6 +15,9 @@ impl Chip8 {
                     self.program_counter += 2;
                 }
             }
+            WaitUntilKeyIsPressedPressed { x_register } => {
+                self.pending_key_press_dest = Some(x_register);
+            }
         }
     }
 }

@@ -166,6 +166,9 @@ impl Chip8 {
             0xF007 => Some(Instruction::Timer(Timer::LoadDelayTimerToRegisterX {
                 x_register,
             })),
+            0xF00A => Some(Instruction::Keyboard(
+                Keyboard::WaitUntilKeyIsPressedPressed { x_register },
+            )),
             0xF015 => Some(Instruction::Timer(Timer::LoadRegisterXToDelayTimer {
                 x_register,
             })),

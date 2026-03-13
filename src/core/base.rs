@@ -79,6 +79,7 @@ pub enum Timer {
 pub enum Keyboard {
     SkipIfKeyInRegisterXIsPressed { x_register: u8 },
     SkipIfKeyInRegisterXIsNotPressed { x_register: u8 },
+    WaitUntilKeyIsPressedPressed { x_register: u8 },
 }
 
 pub struct Chip8 {
@@ -98,6 +99,8 @@ pub struct Chip8 {
 
     // Stores whether 0-9 and A-F is pressed
     pub(super) key_states: [bool; 16],
+
+    pub(super) pending_key_press_dest: Option<u8>,
 
     beep_player: Player,
     _handle: MixerDeviceSink,
@@ -140,6 +143,7 @@ impl Chip8 {
             frame_buffer: [[0; 64]; 32],
             general_registers: [0; 16],
             index_register: 0,
+            pending_key_press_dest: None,
             key_states: [false; 16],
             memory: [0; 4096],
             program_counter: PROGRAM_START_OFFSET as u16,
@@ -270,5 +274,19 @@ impl Chip8 {
 
     pub fn get_key_state(&mut self, index: u8) -> bool {
         self.key_states[index as usize]
+    }
+
+    pub fn is_waiting_for_key_press(&mut self) -> bool {
+        self.handle_delay_timer();
+        self.pending_key_press_dest.is_some()
+    }
+
+    pub fn respond_to_key_press(&mut self, key: u8) {
+        let destination = self
+            .pending_key_press_dest
+            .expect("Expecting respond without waiting beforehand");
+
+        self.general_registers[destination as usize] = key;
+        self.pending_key_press_dest = None;
     }
 }

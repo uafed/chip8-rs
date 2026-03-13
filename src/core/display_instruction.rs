@@ -159,6 +159,9 @@ impl fmt::Display for Keyboard {
             Keyboard::SkipIfKeyInRegisterXIsNotPressed { x_register } => {
                 write!(f, "SNKP V{x_register}")?
             }
+            Keyboard::WaitUntilKeyIsPressedPressed { x_register } => {
+                write!(f, "LD V{x_register}, K")?
+            }
         }
         Ok(())
     }

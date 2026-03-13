@@ -50,6 +50,17 @@ fn main() -> Result<()> {
     }));
 
     loop {
+        while chip8.is_waiting_for_key_press() {
+            match event::read()? {
+                Event::Key(k) if k.code == KeyCode::Char('q') => {}
+                Event::Key(k) if k.is_press() => {
+                    if let Some(index) = is_hex_key_event(k) {
+                        chip8.respond_to_key_press(index);
+                    }
+                }
+                _ => {}
+            }
+        }
         if event::poll(Duration::ZERO)? {
             match event::read()? {
                 Event::Key(k) if k.code == KeyCode::Char('q') => break,
@@ -132,7 +143,7 @@ fn main() -> Result<()> {
             ))?;
             write!(stdout, "{:<width$}", value, width = sidebar_width)?;
         }
-        for key_index in 1..16 {
+        for key_index in 0..16 {
             stdout.queue(cursor::MoveTo(
                 start_x + frame_w * 2,
                 start_y
