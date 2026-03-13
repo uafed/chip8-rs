@@ -17,5 +17,6 @@ pub struct RomFileArgs {
     pub path: String,
 }
 
+pub mod assembler;
 pub mod core;
 pub use core::*;
