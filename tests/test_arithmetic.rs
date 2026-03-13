@@ -57,7 +57,7 @@ fn add_register_x_to_immediate_works() {
 
     assert_eq!(
         chip8.current_instruction,
-        Some(Arithmetic(AddRegisterXToImmediate { x_register: 2 }))
+        Some(Arithmetic(AddRegisterXToIndex { x_register: 2 }))
     );
 
     assert_eq!(chip8.general_registers[2], 24);

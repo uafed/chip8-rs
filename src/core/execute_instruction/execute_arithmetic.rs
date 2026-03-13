@@ -7,7 +7,7 @@ impl Chip8 {
                 let current_value = self.general_registers[x_register as usize];
                 self.general_registers[x_register as usize] = current_value.wrapping_add(value);
             }
-            AddRegisterXToImmediate { x_register } => {
+            AddRegisterXToIndex { x_register } => {
                 let value = self.general_registers[x_register as usize] as u16;
                 self.index_register = self.index_register.wrapping_add(value);
             }

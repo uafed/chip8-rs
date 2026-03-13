@@ -176,7 +176,7 @@ impl Chip8 {
                 x_register,
             })),
             0xF01E => Some(Instruction::Arithmetic(
-                Arithmetic::AddRegisterXToImmediate { x_register },
+                Arithmetic::AddRegisterXToIndex { x_register },
             )),
             0xF033 => Some(Instruction::DataTransfer(
                 DataTransfer::StoreBcdOfRegisterXAtIndex { x_register },

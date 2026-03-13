@@ -64,9 +64,7 @@ impl fmt::Display for Arithmetic {
             Arithmetic::AddImmediateToRegister { x_register, value } => {
                 write!(f, "ADD V{0}, {1:#06X}", x_register, value)?
             }
-            Arithmetic::AddRegisterXToImmediate { x_register } => {
-                write!(f, "ADD I, V{x_register}")?
-            }
+            Arithmetic::AddRegisterXToIndex { x_register } => write!(f, "ADD I, V{x_register}")?,
             Arithmetic::AddRegisterYToRegisterX {
                 x_register,
                 y_register,

@@ -35,7 +35,7 @@ pub enum ControlFlow {
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Arithmetic {
     AddImmediateToRegister { x_register: u8, value: u8 },
-    AddRegisterXToImmediate { x_register: u8 },
+    AddRegisterXToIndex { x_register: u8 },
     AddRegisterYToRegisterX { x_register: u8, y_register: u8 },
     SubtractRegisterYFromRegisterX { x_register: u8, y_register: u8 },
     SubtractNRegisterXFromRegisterY { x_register: u8, y_register: u8 },
