@@ -5,93 +5,59 @@ use std::{
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum Instruction {
-    ClearScreen,
-    LoadImmediateToRegister {
-        x_register: u8,
-        value: u8,
-    },
-    CallSubroutine {
-        address: u16,
-    },
+    ControlFlow(ControlFlow),
+    Arithmetic(Arithmetic),
+    DataTransfer(DataTransfer),
+    Logical(Logical),
+    Drawing(Drawing),
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum ControlFlow {
+    CallSubroutine { address: u16 },
     ReturnFromSubroutine,
-    SkipNextIfRegisterXEqualsImmediate {
-        x_register: u8,
-        value: u8,
-    },
-    SkipNextIfRegisterXNotEqualsImmediate {
-        x_register: u8,
-        value: u8,
-    },
-    SkipNextIfRegisterYNotEqualRegisterX {
-        x_register: u8,
-        y_register: u8,
-    },
-    AddImmediateToRegister {
-        x_register: u8,
-        value: u8,
-    },
-    LoadImmediateToIndexRegister {
-        address: u16,
-    },
+    SkipNextIfRegisterXEqualsImmediate { x_register: u8, value: u8 },
+    SkipNextIfRegisterXNotEqualsImmediate { x_register: u8, value: u8 },
+    SkipNextIfRegisterYNotEqualRegisterX { x_register: u8, y_register: u8 },
+    SkipNextIfRegisterXEqualsRegisterY { x_register: u8, y_register: u8 },
+    JumpToAddress { address: u16 },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Arithmetic {
+    AddImmediateToRegister { x_register: u8, value: u8 },
+    AddRegisterXToImmediate { x_register: u8 },
+    AddRegisterYToRegisterX { x_register: u8, y_register: u8 },
+    SubtractRegisterYFromRegisterX { x_register: u8, y_register: u8 },
+    SubtractNRegisterXFromRegisterY { x_register: u8, y_register: u8 },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Logical {
+    OrRegisterXWithRegisterY { x_register: u8, y_register: u8 },
+    AndRegisterXWithRegisterY { x_register: u8, y_register: u8 },
+    XorRegisterXWithRegisterY { x_register: u8, y_register: u8 },
+    ShiftRegisterXRightWithRegisterY { x_register: u8, y_register: u8 },
+    ShiftRegisterXLeftWithRegisterY { x_register: u8, y_register: u8 },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum DataTransfer {
+    LoadImmediateToRegister { x_register: u8, value: u8 },
+    LoadImmediateToIndexRegister { address: u16 },
+    LoadRegisterYToRegisterX { x_register: u8, y_register: u8 },
+    StoreBcdOfRegisterXAtIndex { x_register: u8 },
+    SaveNumRegistersToImediate { n_registers: u8 },
+    SaveImmediateToNumRegisters { n_registers: u8 },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Drawing {
+    ClearScreen,
     DrawSpriteToScreen {
         x_register: u8,
         y_register: u8,
         n_rows: u8,
-    },
-    JumpToAddress {
-        address: u16,
-    },
-    LoadRegisterYToRegisterX {
-        x_register: u8,
-        y_register: u8,
-    },
-    AddRegisterXToImmediate {
-        x_register: u8,
-    },
-    SkipNextIfRegisterXEqualsRegisterY {
-        x_register: u8,
-        y_register: u8,
-    },
-    OrRegisterXWithRegisterY {
-        x_register: u8,
-        y_register: u8,
-    },
-    AndRegisterXWithRegisterY {
-        x_register: u8,
-        y_register: u8,
-    },
-    XorRegisterXWithRegisterY {
-        x_register: u8,
-        y_register: u8,
-    },
-    AddRegisterYToRegisterX {
-        x_register: u8,
-        y_register: u8,
-    },
-    SubtractRegisterYFromRegisterX {
-        x_register: u8,
-        y_register: u8,
-    },
-    ShiftRegisterXRightWithRegisterY {
-        x_register: u8,
-        y_register: u8,
-    },
-    ShiftRegisterXLeftWithRegisterY {
-        x_register: u8,
-        y_register: u8,
-    },
-    SubtractNRegisterXFromRegisterY {
-        x_register: u8,
-        y_register: u8,
-    },
-    StoreBcdOfRegisterXAtIndex {
-        x_register: u8,
-    },
-    SaveNumRegistersToImediate {
-        n_registers: u8,
-    },
-    SaveImmediateToNumRegisters {
-        n_registers: u8,
     },
 }
 
