@@ -18,6 +18,12 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Install ALSA dev dependencies
+        run: sudo apt-get install -y libasound2-dev
+
       - run: rustup update ${{ matrix.toolchain }} && rustup default ${{ matrix.toolchain }}
+
       - run: cargo build --verbose
+
       - run: cargo test --verbose
