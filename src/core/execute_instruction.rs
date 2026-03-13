@@ -4,7 +4,9 @@ mod execute_arithmetic;
 mod execute_control_flow;
 mod execute_data_transfer;
 mod execute_drawing;
+mod execute_keyboard;
 mod execute_logical;
+mod execute_timer;
 
 impl Chip8 {
     pub fn get_flag_register(&self) -> u8 {
@@ -27,6 +29,12 @@ impl Chip8 {
             }
             Instruction::Logical(instruction) => {
                 self.execute_logical_instruction(instruction);
+            }
+            Instruction::Timer(instruction) => {
+                self.execute_timer_instruction(instruction);
+            }
+            Instruction::Keyboard(instruction) => {
+                self.execute_keyboard_instruction(instruction);
             }
         }
     }

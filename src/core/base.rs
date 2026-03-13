@@ -1,6 +1,12 @@
 use std::{
     fs::File,
     io::{Read, Result},
+    time::Instant,
+};
+
+use rodio::{
+    MixerDeviceSink, Player,
+    source::{SineWave, Source},
 };
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -10,6 +16,8 @@ pub enum Instruction {
     DataTransfer(DataTransfer),
     Logical(Logical),
     Drawing(Drawing),
+    Timer(Timer),
+    Keyboard(Keyboard),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -60,8 +68,19 @@ pub enum Drawing {
         n_rows: u8,
     },
 }
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Timer {
+    LoadDelayTimerToRegisterX { x_register: u8 },
+    LoadRegisterXToDelayTimer { x_register: u8 },
+    LoadRegisterXToSoundTimer { x_register: u8 },
+}
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum Keyboard {
+    SkipIfKeyInRegisterXIsPressed { x_register: u8 },
+    SkipIfKeyInRegisterXIsNotPressed { x_register: u8 },
+}
+
 pub struct Chip8 {
     pub current_instruction: Option<Instruction>,
     pub delay_register: u8,
@@ -72,7 +91,16 @@ pub struct Chip8 {
     pub program_counter: u16,
     pub stack_memory: [u16; 16],
     pub stack_pointer: u8,
-    pub timer_register: u8,
+    pub sound_timer: u8,
+
+    pub delay_timer_reference: Option<Instant>,
+    pub sound_timer_reference: Option<Instant>,
+
+    // Stores whether 0-9 and A-F is pressed
+    pub(super) key_states: [bool; 16],
+
+    beep_player: Player,
+    _handle: MixerDeviceSink,
 }
 
 const SPRITES: [[u8; 5]; 16] = [
@@ -98,17 +126,30 @@ pub const PROGRAM_START_OFFSET: usize = 0x200;
 
 impl Chip8 {
     pub fn new() -> Self {
+        let mut handle =
+            rodio::DeviceSinkBuilder::open_default_sink().expect("open default audio stream");
+        handle.log_on_drop(false);
+        let player = rodio::Player::connect_new(&handle.mixer());
+        let source = SineWave::new(440.0).repeat_infinite().amplify(0.20);
+        player.append(source);
+        player.pause();
+
         let mut instance = Self {
             current_instruction: None,
             delay_register: 0,
             frame_buffer: [[0; 64]; 32],
             general_registers: [0; 16],
             index_register: 0,
+            key_states: [false; 16],
             memory: [0; 4096],
             program_counter: PROGRAM_START_OFFSET as u16,
             stack_memory: [0; 16],
             stack_pointer: 0,
-            timer_register: 0,
+            sound_timer: 0,
+            delay_timer_reference: None,
+            sound_timer_reference: None,
+            beep_player: player,
+            _handle: handle,
         };
 
         SPRITES.iter().enumerate().for_each(|(index, item)| {
@@ -161,10 +202,73 @@ impl Chip8 {
         let instruction = self.decode_instruction(opcode)?;
         self.current_instruction = Some(instruction);
         self.execute_instruction(instruction);
+        self.handle_timers()?;
+        Ok(())
+    }
+
+    fn handle_timers(&mut self) -> Result<()> {
+        if self.delay_register == 0 && self.sound_timer == 0 {
+            return Ok(());
+        }
+
+        self.handle_delay_timer();
+        self.handle_sound_timer()?;
+        Ok(())
+    }
+
+    fn handle_delay_timer(&mut self) {
+        if self.delay_register == 0 {
+            return;
+        }
+        if let Some(start) = self.delay_timer_reference {
+            let elapsed = start.elapsed();
+            let num_ticks_passed = (elapsed.as_secs_f32() * 60.0).round() as u8;
+            self.delay_register = self
+                .delay_register
+                .checked_sub(num_ticks_passed)
+                .unwrap_or(0);
+
+            if self.delay_register == 0 {
+                self.delay_timer_reference = None;
+            }
+        }
+    }
+
+    fn handle_sound_timer(&mut self) -> Result<()> {
+        if self.sound_timer == 0 {
+            return Ok(());
+        }
+        if let Some(start) = self.sound_timer_reference {
+            let elapsed = start.elapsed();
+            let num_ticks_passed = (elapsed.as_secs_f32() * 60.0).round() as u8;
+            self.sound_timer = self.sound_timer.checked_sub(num_ticks_passed).unwrap_or(0);
+
+            if self.sound_timer > 0 {
+                self.beep_player.play();
+            } else {
+                self.beep_player.pause();
+            }
+        }
         Ok(())
     }
 
     pub(super) fn set_flag_register(&mut self, is_active: bool) {
         self.general_registers[self.general_registers.len() - 1] = if is_active { 1 } else { 0 };
+    }
+
+    pub(super) fn get_register_value(&self, index: u8) -> u8 {
+        self.general_registers[index as usize]
+    }
+
+    pub(super) fn set_register_value(&mut self, index: u8, value: u8) {
+        self.general_registers[index as usize] = value;
+    }
+
+    pub fn set_key_state(&mut self, index: u8, is_pressed: bool) {
+        self.key_states[index as usize] = is_pressed;
+    }
+
+    pub fn get_key_state(&mut self, index: u8) -> bool {
+        self.key_states[index as usize]
     }
 }

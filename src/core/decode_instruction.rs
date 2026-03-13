@@ -1,4 +1,7 @@
-use crate::{Arithmetic, Chip8, ControlFlow, DataTransfer, Drawing, Logical, core::Instruction};
+use crate::{
+    Arithmetic, Chip8, ControlFlow, DataTransfer, Drawing, Keyboard, Logical, Timer,
+    core::Instruction,
+};
 use std::io::{Error, ErrorKind, Result};
 
 impl Chip8 {
@@ -154,6 +157,21 @@ impl Chip8 {
 
         let code = opcode & 0xF0FF;
         match code {
+            0xE09E => Some(Instruction::Keyboard(
+                Keyboard::SkipIfKeyInRegisterXIsPressed { x_register },
+            )),
+            0xE0A1 => Some(Instruction::Keyboard(
+                Keyboard::SkipIfKeyInRegisterXIsNotPressed { x_register },
+            )),
+            0xF007 => Some(Instruction::Timer(Timer::LoadDelayTimerToRegisterX {
+                x_register,
+            })),
+            0xF015 => Some(Instruction::Timer(Timer::LoadRegisterXToDelayTimer {
+                x_register,
+            })),
+            0xF018 => Some(Instruction::Timer(Timer::LoadRegisterXToSoundTimer {
+                x_register,
+            })),
             0xF01E => Some(Instruction::Arithmetic(
                 Arithmetic::AddRegisterXToImmediate { x_register },
             )),

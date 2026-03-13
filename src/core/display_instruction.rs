@@ -1,6 +1,8 @@
 use std::fmt::{self};
 
-use crate::{Arithmetic, ControlFlow, DataTransfer, Drawing, Instruction, Logical};
+use crate::{
+    Arithmetic, ControlFlow, DataTransfer, Drawing, Instruction, Keyboard, Logical, Timer,
+};
 
 impl fmt::Display for Instruction {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -10,10 +12,13 @@ impl fmt::Display for Instruction {
             Instruction::DataTransfer(inner) => inner.fmt(f)?,
             Instruction::Drawing(inner) => inner.fmt(f)?,
             Instruction::Logical(inner) => inner.fmt(f)?,
+            Instruction::Timer(inner) => inner.fmt(f)?,
+            Instruction::Keyboard(inner) => inner.fmt(f)?,
         }
         Ok(())
     }
 }
+
 impl fmt::Display for Drawing {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match &self {
@@ -130,6 +135,31 @@ impl fmt::Display for Logical {
                 y_register,
             } => write!(f, "SHL V{x_register}, V{y_register}")?,
         };
+        Ok(())
+    }
+}
+
+impl fmt::Display for Timer {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self {
+            Timer::LoadDelayTimerToRegisterX { x_register } => write!(f, "LD V{x_register}, DT")?,
+            Timer::LoadRegisterXToDelayTimer { x_register } => write!(f, "LD DT, V{x_register}")?,
+            Timer::LoadRegisterXToSoundTimer { x_register } => write!(f, "LD ST, V{x_register}")?,
+        }
+        Ok(())
+    }
+}
+
+impl fmt::Display for Keyboard {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match &self {
+            Keyboard::SkipIfKeyInRegisterXIsPressed { x_register } => {
+                write!(f, "SKP V{x_register}")?
+            }
+            Keyboard::SkipIfKeyInRegisterXIsNotPressed { x_register } => {
+                write!(f, "SNKP V{x_register}")?
+            }
+        }
         Ok(())
     }
 }
