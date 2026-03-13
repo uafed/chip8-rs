@@ -163,4 +163,8 @@ impl Chip8 {
         self.execute_instruction(instruction);
         Ok(())
     }
+
+    pub(super) fn set_flag_register(&mut self, is_active: bool) {
+        self.general_registers[self.general_registers.len() - 1] = if is_active { 1 } else { 0 };
+    }
 }
