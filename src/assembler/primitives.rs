@@ -6,8 +6,9 @@ use nom::{
         complete::{tag_no_case, take_while_m_n},
         tag,
     },
-    character::complete::space0,
+    character::complete::{char, space0},
     combinator::map_res,
+    sequence::delimited,
 };
 
 pub fn from_hex_digit(input: &str) -> Result<u8, std::num::ParseIntError> {
@@ -51,4 +52,8 @@ pub fn parse_index_register(input: &str) -> IResult<&str, ()> {
     let (input, _) = tag_no_case("I")(input)?;
 
     Ok((input, ()))
+}
+
+pub fn parse_addressed_index_register(input: &str) -> IResult<&str, ()> {
+    delimited(char('('), parse_index_register, char(')')).parse(input)
 }

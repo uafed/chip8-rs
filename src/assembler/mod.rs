@@ -28,19 +28,19 @@ pub fn parse_instructions(input: &str) -> IResult<&str, Vec<Instruction>> {
         map(parse_arithmetic_instruction, |arithmetic| {
             Instruction::Arithmetic(arithmetic)
         }),
-        map(parse_logical_instruction, |logical| {
-            Instruction::Logical(logical)
-        }),
         map(parse_data_transfer_instruction, |data_transfer| {
             Instruction::DataTransfer(data_transfer)
         }),
-        map(parse_drawing_instruction, |drawing| {
-            Instruction::Drawing(drawing)
-        }),
-        map(parse_timer_instruction, |timer| Instruction::Timer(timer)),
-        map(parse_keyboard_instruction, |keyboard| {
-            Instruction::Keyboard(keyboard)
-        }),
+        // map(parse_logical_instruction, |logical| {
+        //     Instruction::Logical(logical)
+        // }),
+        // map(parse_drawing_instruction, |drawing| {
+        //     Instruction::Drawing(drawing)
+        // }),
+        // map(parse_timer_instruction, |timer| Instruction::Timer(timer)),
+        // map(parse_keyboard_instruction, |keyboard| {
+        //     Instruction::Keyboard(keyboard)
+        // }),
     )))
     .parse(input)
 }

@@ -94,7 +94,7 @@ impl fmt::Display for DataTransfer {
             DataTransfer::LoadRegisterYToRegisterX {
                 x_register,
                 y_register,
-            } => write!(f, "ADD V{}, V{}", x_register, y_register)?,
+            } => write!(f, "LD V{}, V{}", x_register, y_register)?,
             DataTransfer::StoreBcdOfRegisterXAtIndex { x_register } => {
                 write!(f, "BCD [I], V{x_register}")?
             }

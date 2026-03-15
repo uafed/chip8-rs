@@ -1,6 +1,6 @@
 use nom::{
-    IResult, Parser, branch::alt, bytes::complete::tag_no_case, combinator::map,
-    sequence::separated_pair,
+    IResult, Parser, branch::alt, bytes::complete::tag_no_case, character::complete::space1,
+    combinator::map, sequence::separated_pair,
 };
 
 use crate::{
@@ -11,7 +11,7 @@ use crate::{
 };
 
 fn add_instruction(input: &str) -> IResult<&str, ()> {
-    let (input, _) = tag_no_case("add").parse(input)?;
+    let (input, _) = (tag_no_case("add"), space1).parse(input)?;
     Ok((input, ()))
 }
 
@@ -66,11 +66,14 @@ enum Subtract {
 }
 
 fn parse_subtract_two_general_registers(input: &str) -> IResult<&str, Arithmetic> {
-    let (input, command) = alt((
-        map(tag_no_case("sub"), |_| Subtract::Sub),
-        map(tag_no_case("subn"), |_| Subtract::SubN),
-    ))
-    .parse(input)?;
+    let (input, (command, _)) = (
+        alt((
+            map(tag_no_case("sub"), |_| Subtract::Sub),
+            map(tag_no_case("subn"), |_| Subtract::SubN),
+        )),
+        space1,
+    )
+        .parse(input)?;
     let (input, (x_register, y_register)) = (separated_pair(
         parse_general_register,
         arguments_separator,

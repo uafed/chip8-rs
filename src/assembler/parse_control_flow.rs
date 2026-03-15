@@ -1,6 +1,6 @@
 use nom::{
-    IResult, Parser, branch::alt, bytes::complete::tag_no_case, combinator::map,
-    sequence::separated_pair,
+    IResult, Parser, branch::alt, bytes::complete::tag_no_case, character::complete::space1,
+    combinator::map, sequence::separated_pair,
 };
 
 use crate::{
@@ -11,21 +11,21 @@ use crate::{
 };
 
 fn parse_call_instruction(input: &str) -> IResult<&str, ControlFlow> {
-    let (input, _) = tag_no_case("call").parse(input)?;
+    let (input, _) = (tag_no_case("call"), space1).parse(input)?;
     let (input, address) = parse_address.parse(input)?;
 
     Ok((input, CallSubroutine { address }))
 }
 
 fn parse_jump_to_address_instruction(input: &str) -> IResult<&str, ControlFlow> {
-    let (input, _) = tag_no_case("jmp").parse(input)?;
+    let (input, _) = (tag_no_case("jmp"), space1).parse(input)?;
     let (input, address) = parse_address.parse(input)?;
 
     Ok((input, JumpToAddress { address }))
 }
 
 fn parse_return_from_subroutine(input: &str) -> IResult<&str, ControlFlow> {
-    let (input, _) = tag_no_case("ret").parse(input)?;
+    let (input, _) = (tag_no_case("ret"), space1).parse(input)?;
     Ok((input, ReturnFromSubroutine))
 }
 
@@ -40,11 +40,14 @@ enum SkipIf {
 }
 
 fn parse_skip_instruction(input: &str) -> IResult<&str, ControlFlow> {
-    let (input, command) = alt((
-        map(tag_no_case("se"), |_| SkipIf::Equal),
-        map(tag_no_case("sne"), |_| SkipIf::NotEqual),
-    ))
-    .parse(input)?;
+    let (input, (command, _)) = (
+        alt((
+            map(tag_no_case("se"), |_| SkipIf::Equal),
+            map(tag_no_case("sne"), |_| SkipIf::NotEqual),
+        )),
+        space1,
+    )
+        .parse(input)?;
     let (input, (x_register, rhs)) = (separated_pair(
         parse_general_register,
         arguments_separator,
