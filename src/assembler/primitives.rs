@@ -54,6 +54,24 @@ pub fn parse_index_register(input: &str) -> IResult<&str, ()> {
     Ok((input, ()))
 }
 
+pub fn parse_keyboard_register(input: &str) -> IResult<&str, ()> {
+    let (input, _) = tag_no_case("K")(input)?;
+
+    Ok((input, ()))
+}
+
+pub fn parse_delay_timer_register(input: &str) -> IResult<&str, ()> {
+    let (input, _) = tag_no_case("DT")(input)?;
+
+    Ok((input, ()))
+}
+
+pub fn parse_sound_timer_register(input: &str) -> IResult<&str, ()> {
+    let (input, _) = tag_no_case("ST")(input)?;
+
+    Ok((input, ()))
+}
+
 pub fn parse_addressed_index_register(input: &str) -> IResult<&str, ()> {
     delimited(char('('), parse_index_register, char(')')).parse(input)
 }
