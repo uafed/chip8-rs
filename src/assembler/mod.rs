@@ -3,7 +3,10 @@ use nom::{IResult, Parser, branch::alt, combinator::map, multi::many1};
 use crate::{
     Instruction,
     assembler::{
-        parse_arithmetic::parse_arithmetic_instruction,
+        encode_arithmetic::encode_arithmetic, encode_control_flow::encode_control_flow,
+        encode_data_transfer::encode_data_transfer, encode_drawing::encode_drawing,
+        encode_keyboard::encode_keyboard, encode_logical::encode_logical,
+        encode_timer::encode_timer, parse_arithmetic::parse_arithmetic_instruction,
         parse_control_flow::parse_control_flow_instruction,
         parse_data_transfer::parse_data_transfer_instruction,
         parse_drawing::parse_drawing_instruction, parse_keyboard::parse_keyboard_instruction,
@@ -11,6 +14,13 @@ use crate::{
     },
 };
 
+mod encode_arithmetic;
+mod encode_control_flow;
+mod encode_data_transfer;
+mod encode_drawing;
+mod encode_keyboard;
+mod encode_logical;
+mod encode_timer;
 mod parse_arithmetic;
 mod parse_control_flow;
 mod parse_data_transfer;
@@ -43,4 +53,16 @@ pub fn parse_instructions(input: &str) -> IResult<&str, Vec<Instruction>> {
         }),
     )))
     .parse(input)
+}
+
+pub fn encode_instruction(instruction: &Instruction) -> u16 {
+    match instruction {
+        Instruction::ControlFlow(instruction) => encode_control_flow(instruction),
+        Instruction::Arithmetic(instruction) => encode_arithmetic(instruction),
+        Instruction::DataTransfer(instruction) => encode_data_transfer(instruction),
+        Instruction::Drawing(instruction) => encode_drawing(instruction),
+        Instruction::Keyboard(instruction) => encode_keyboard(instruction),
+        Instruction::Timer(instruction) => encode_timer(instruction),
+        Instruction::Logical(instruction) => encode_logical(instruction),
+    }
 }
