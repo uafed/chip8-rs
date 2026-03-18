@@ -55,7 +55,7 @@ pub fn parse_instructions(input: &str) -> IResult<&str, Vec<Instruction>> {
     .parse(input)
 }
 
-pub fn encode_instruction(instruction: &Instruction) -> u16 {
+pub fn encode_single_instruction(instruction: &Instruction) -> u16 {
     match instruction {
         Instruction::ControlFlow(instruction) => encode_control_flow(instruction),
         Instruction::Arithmetic(instruction) => encode_arithmetic(instruction),
@@ -65,4 +65,11 @@ pub fn encode_instruction(instruction: &Instruction) -> u16 {
         Instruction::Timer(instruction) => encode_timer(instruction),
         Instruction::Logical(instruction) => encode_logical(instruction),
     }
+}
+
+pub fn encode_instructions(instructions: &[Instruction]) -> Vec<u16> {
+    instructions
+        .iter()
+        .map(|instruction| encode_single_instruction(instruction))
+        .collect::<Vec<u16>>()
 }
