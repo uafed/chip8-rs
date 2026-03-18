@@ -1,4 +1,10 @@
-use nom::{IResult, Parser, branch::alt, combinator::map, multi::many1};
+use nom::{
+    IResult, Parser,
+    branch::alt,
+    character::complete::newline,
+    combinator::{all_consuming, map},
+    multi::separated_list1,
+};
 
 use crate::{
     Instruction,
@@ -31,27 +37,30 @@ mod parse_timer;
 mod primitives;
 
 pub fn parse_instructions(input: &str) -> IResult<&str, Vec<Instruction>> {
-    many1(alt((
-        map(parse_control_flow_instruction, |control_flow| {
-            Instruction::ControlFlow(control_flow)
-        }),
-        map(parse_arithmetic_instruction, |arithmetic| {
-            Instruction::Arithmetic(arithmetic)
-        }),
-        map(parse_data_transfer_instruction, |data_transfer| {
-            Instruction::DataTransfer(data_transfer)
-        }),
-        map(parse_logical_instruction, |logical| {
-            Instruction::Logical(logical)
-        }),
-        map(parse_drawing_instruction, |drawing| {
-            Instruction::Drawing(drawing)
-        }),
-        map(parse_timer_instruction, |timer| Instruction::Timer(timer)),
-        map(parse_keyboard_instruction, |keyboard| {
-            Instruction::Keyboard(keyboard)
-        }),
-    )))
+    all_consuming(separated_list1(
+        newline,
+        alt((
+            map(parse_control_flow_instruction, |control_flow| {
+                Instruction::ControlFlow(control_flow)
+            }),
+            map(parse_arithmetic_instruction, |arithmetic| {
+                Instruction::Arithmetic(arithmetic)
+            }),
+            map(parse_data_transfer_instruction, |data_transfer| {
+                Instruction::DataTransfer(data_transfer)
+            }),
+            map(parse_logical_instruction, |logical| {
+                Instruction::Logical(logical)
+            }),
+            map(parse_drawing_instruction, |drawing| {
+                Instruction::Drawing(drawing)
+            }),
+            map(parse_timer_instruction, |timer| Instruction::Timer(timer)),
+            map(parse_keyboard_instruction, |keyboard| {
+                Instruction::Keyboard(keyboard)
+            }),
+        )),
+    ))
     .parse(input)
 }
 

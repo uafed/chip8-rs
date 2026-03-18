@@ -8,6 +8,7 @@ default = ["audio"]
 audio = ["dep:rodio"]
 
 [dependencies]
+byteorder = "1.5.0"
 clap = { version = "4.5.60", features = ["derive"] }
 crossterm = "0.29.0"
 nom = "8.0.0"
