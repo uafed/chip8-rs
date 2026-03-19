@@ -56,6 +56,7 @@ fn parse_label(input: &str) -> IResult<&str, &str> {
 #[derive(Debug, Clone, PartialEq)]
 pub enum InstructionWithLabel {
     JumpToLabel(String),
+    CallSubroutineByLabel(String),
 }
 
 #[derive(PartialEq, Debug)]
@@ -80,6 +81,11 @@ pub fn parse_instructions<'a>(input: &'a str) -> IResult<&'a str, Vec<AssemblerL
                             address,
                         ))
                     }
+                    AssemblyControlFlow::Address(AddressControlFlow::CallSubroutineByLabel(
+                        address,
+                    )) => AssemblerLine::InstructionWithLabel(
+                        InstructionWithLabel::CallSubroutineByLabel(address),
+                    ),
                     AssemblyControlFlow::NonAddress(instruction) => {
                         AssemblerLine::Instruction(Instruction::ControlFlow(instruction))
                     }
@@ -123,38 +129,46 @@ pub fn encode_single_instruction(instruction: &Instruction) -> u16 {
     }
 }
 
-pub fn encode_single_instruction_with_label(
-    instruction: &InstructionWithLabel,
-    label_table: &HashMap<String, u16>,
-) -> u16 {
+pub fn encode_single_instruction_with_label(instruction: &InstructionWithLabel) -> u16 {
     match instruction {
-        InstructionWithLabel::JumpToLabel(label) => {
-            let address = label_table.get(label).expect(
-                format!("Failed to obtain address for label: '{}'", label.clone()).as_str(),
-            );
-            println!("jump to: {:#06x} {}", 0x1000 | (*address), address);
-            0x1000 | (*address)
-        }
+        InstructionWithLabel::JumpToLabel(_) => 0x1000,
+        InstructionWithLabel::CallSubroutineByLabel(_) => 0x1000,
     }
 }
 
 pub fn encode_instructions(lines: &[AssemblerLine]) -> Vec<u16> {
-    let mut label_table: HashMap<String, u16> = HashMap::new();
+    let mut data: Vec<u16> = Vec::new();
+    data.reserve(lines.len());
 
-    lines
-        .iter()
-        .enumerate()
-        .map(|(idx, line)| match line {
-            AssemblerLine::Instruction(instruction) => Some(encode_single_instruction(instruction)),
-            AssemblerLine::InstructionWithLabel(instruction) => Some(
-                encode_single_instruction_with_label(instruction, &label_table),
-            ),
-            AssemblerLine::Label(label) => {
-                let address = (PROGRAM_START_OFFSET as u16) + ((idx as u16) * 2);
-                label_table.insert(String::from(*label), address);
-                None
+    let mut label_table: HashMap<String, u16> = HashMap::new();
+    let mut second_pass_markers: Vec<(usize, String)> = vec![];
+
+    for line in lines.iter() {
+        match line {
+            AssemblerLine::Instruction(instruction) => {
+                data.push(encode_single_instruction(instruction))
             }
-        })
-        .flatten()
-        .collect::<Vec<u16>>()
+            AssemblerLine::InstructionWithLabel(instruction) => match instruction {
+                InstructionWithLabel::JumpToLabel(label) => {
+                    second_pass_markers.push((data.len(), label.clone()));
+                    data.push(encode_single_instruction_with_label(instruction))
+                }
+                InstructionWithLabel::CallSubroutineByLabel(label) => {
+                    second_pass_markers.push((data.len(), label.clone()));
+                    data.push(encode_single_instruction_with_label(instruction))
+                }
+            },
+            AssemblerLine::Label(label) => {
+                let address = (PROGRAM_START_OFFSET as u16) + (((data.len()) as u16) * 2);
+                label_table.insert(String::from(*label), address);
+            }
+        }
+    }
+
+    for (idx, label) in second_pass_markers {
+        let address = label_table.get(&label).expect("Failed to get label");
+        data[idx] |= address;
+    }
+
+    data
 }

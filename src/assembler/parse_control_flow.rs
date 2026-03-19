@@ -35,8 +35,18 @@ fn parse_jump_to_label_instruction(input: &str) -> IResult<&str, AddressControlF
     Ok((input, AddressControlFlow::JumpTolabel(address.to_string())))
 }
 
+fn parse_call_by_label_instruction(input: &str) -> IResult<&str, AddressControlFlow> {
+    let (input, _) = (tag_no_case("call"), space1).parse(input)?;
+    let (input, address) = alphanumeric1.parse(input)?;
+
+    Ok((
+        input,
+        AddressControlFlow::CallSubroutineByLabel(address.to_string()),
+    ))
+}
+
 fn parse_return_from_subroutine(input: &str) -> IResult<&str, ControlFlow> {
-    let (input, _) = (tag_no_case("ret"), space1).parse(input)?;
+    let (input, _) = tag_no_case("ret").parse(input)?;
     Ok((input, ReturnFromSubroutine))
 }
 
@@ -98,6 +108,7 @@ fn parse_skip_instruction(input: &str) -> IResult<&str, ControlFlow> {
 #[derive(Clone, PartialEq)]
 pub enum AddressControlFlow {
     JumpTolabel(String),
+    CallSubroutineByLabel(String),
 }
 
 #[derive(Clone, PartialEq)]
@@ -118,6 +129,9 @@ pub fn parse_control_flow_instruction(input: &str) -> IResult<&str, AssemblyCont
             AssemblyControlFlow::NonAddress(instruction)
         }),
         map(parse_jump_to_label_instruction, |instruction| {
+            AssemblyControlFlow::Address(instruction)
+        }),
+        map(parse_call_by_label_instruction, |instruction| {
             AssemblyControlFlow::Address(instruction)
         }),
         map(parse_skip_instruction, |instruction| {
