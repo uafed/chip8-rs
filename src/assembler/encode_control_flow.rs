@@ -18,6 +18,6 @@ pub fn encode_control_flow(instruction: &ControlFlow) -> u16 {
         } => 0x9000 | ((x_register as u16) << 8) | ((y_register as u16) << 4),
         &ControlFlow::JumpToAddress { address } => 0x1000 | address,
         &ControlFlow::CallSubroutine { address } => 0x2000 | address,
-        ControlFlow::ReturnFromSubroutine => 0x00EE,
+        &ControlFlow::ReturnFromSubroutine => 0x00EE,
     }
 }

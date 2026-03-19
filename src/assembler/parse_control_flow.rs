@@ -1,6 +1,10 @@
 use nom::{
-    IResult, Parser, branch::alt, bytes::complete::tag_no_case, character::complete::space1,
-    combinator::map, sequence::separated_pair,
+    IResult, Parser,
+    branch::alt,
+    bytes::complete::tag_no_case,
+    character::complete::{alphanumeric1, space1},
+    combinator::map,
+    sequence::separated_pair,
 };
 
 use crate::{
@@ -22,6 +26,13 @@ fn parse_jump_to_address_instruction(input: &str) -> IResult<&str, ControlFlow> 
     let (input, address) = parse_address.parse(input)?;
 
     Ok((input, JumpToAddress { address }))
+}
+
+fn parse_jump_to_label_instruction(input: &str) -> IResult<&str, AddressControlFlow> {
+    let (input, _) = (tag_no_case("jmp"), space1).parse(input)?;
+    let (input, address) = alphanumeric1.parse(input)?;
+
+    Ok((input, AddressControlFlow::JumpTolabel(address.to_string())))
 }
 
 fn parse_return_from_subroutine(input: &str) -> IResult<&str, ControlFlow> {
@@ -84,12 +95,34 @@ fn parse_skip_instruction(input: &str) -> IResult<&str, ControlFlow> {
     Ok((input, instruction))
 }
 
-pub fn parse_control_flow_instruction(input: &str) -> IResult<&str, ControlFlow> {
+#[derive(Clone, PartialEq)]
+pub enum AddressControlFlow {
+    JumpTolabel(String),
+}
+
+#[derive(Clone, PartialEq)]
+pub enum AssemblyControlFlow {
+    NonAddress(ControlFlow),
+    Address(AddressControlFlow),
+}
+
+pub fn parse_control_flow_instruction(input: &str) -> IResult<&str, AssemblyControlFlow> {
     alt((
-        parse_call_instruction,
-        parse_jump_to_address_instruction,
-        parse_return_from_subroutine,
-        parse_skip_instruction,
+        map(parse_call_instruction, |instruction| {
+            AssemblyControlFlow::NonAddress(instruction)
+        }),
+        map(parse_jump_to_address_instruction, |instruction| {
+            AssemblyControlFlow::NonAddress(instruction)
+        }),
+        map(parse_return_from_subroutine, |instruction| {
+            AssemblyControlFlow::NonAddress(instruction)
+        }),
+        map(parse_jump_to_label_instruction, |instruction| {
+            AssemblyControlFlow::Address(instruction)
+        }),
+        map(parse_skip_instruction, |instruction| {
+            AssemblyControlFlow::NonAddress(instruction)
+        }),
     ))
     .parse(input)
 }
