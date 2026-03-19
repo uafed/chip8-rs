@@ -166,7 +166,9 @@ pub fn encode_instructions(lines: &[AssemblerLine]) -> Vec<u16> {
     }
 
     for (idx, label) in second_pass_markers {
-        let address = label_table.get(&label).expect("Failed to get label");
+        let address = label_table
+            .get(&label)
+            .expect(format!("Failed to get address for label: '{}'", label).as_str());
         data[idx] |= address;
     }
 
