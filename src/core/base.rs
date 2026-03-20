@@ -210,7 +210,7 @@ impl Chip8 {
 
     pub fn load_program(&mut self, path: &str) -> Result<()> {
         let mut file = File::open(path)?;
-        file.read_exact(&mut self.memory[PROGRAM_START_OFFSET..])?;
+        let _ = file.read(&mut self.memory[PROGRAM_START_OFFSET..])?;
         Ok(())
     }
 
