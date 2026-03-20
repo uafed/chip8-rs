@@ -1,7 +1,5 @@
 use nom::IResult;
 
-#[allow(dead_code)]
-
 pub enum TopLevelStatement {
     FunctionDecl,
 }
@@ -12,6 +10,7 @@ enum Type {
     Inferred,
 }
 
+#[allow(dead_code, unused)]
 pub struct FunctionDeclaration {
     name: String,
     parameters: Vec<FunctionParameter>,
@@ -19,21 +18,25 @@ pub struct FunctionDeclaration {
     body: Vec<Statement>,
 }
 
+#[allow(dead_code, unused)]
 pub struct FunctionParameter {
     name: String,
     parameter_type: Type,
 }
 
+#[allow(dead_code, unused)]
 pub struct IfStatement {
     condition: ExpressionNode,
     body: Vec<Statement>,
 }
 
+#[allow(dead_code, unused)]
 pub struct FunctionCall {
     name: String,
     arguments: Vec<ExpressionNode>,
 }
 
+#[allow(dead_code, unused)]
 pub struct Literal {
     // NOTE: Not sure of this is the best way to do this yet.
     text: String,
@@ -46,6 +49,7 @@ pub enum BinaryOperator {
     Plus,
 }
 
+#[allow(dead_code, unused)]
 pub struct BinaryExpression {
     left: Box<ExpressionNode>,
     right: Box<ExpressionNode>,

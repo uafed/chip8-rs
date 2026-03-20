@@ -137,7 +137,7 @@ fn initialize_audio() -> (Option<MixerDeviceSink>, Option<Player>) {
     let mut handle =
         rodio::DeviceSinkBuilder::open_default_sink().expect("open default audio stream");
     handle.log_on_drop(false);
-    let player = rodio::Player::connect_new(&handle.mixer());
+    let player = rodio::Player::connect_new(handle.mixer());
     let source = SineWave::new(440.0).repeat_infinite().amplify(0.20);
     player.append(source);
     player.pause();
@@ -145,12 +145,12 @@ fn initialize_audio() -> (Option<MixerDeviceSink>, Option<Player>) {
     (Some(handle), Some(player))
 }
 
-impl Chip8 {
-    pub fn new() -> Self {
+impl Default for Chip8 {
+    fn default() -> Self {
         #[cfg(feature = "audio")]
         let (handle, player) = initialize_audio();
 
-        let mut instance = Self {
+        Self {
             current_instruction: None,
             delay_register: 0,
             frame_buffer: [[0; 64]; 32],
@@ -171,7 +171,13 @@ impl Chip8 {
 
             #[cfg(feature = "audio")]
             _handle: handle,
-        };
+        }
+    }
+}
+
+impl Chip8 {
+    pub fn new() -> Self {
+        let mut instance = Self::default();
 
         SPRITES.iter().enumerate().for_each(|(index, item)| {
             let start = index * item.len();
@@ -189,7 +195,7 @@ impl Chip8 {
             let bytes = instr.to_be_bytes();
             let start = index * 2;
 
-            let destinations = &mut instance.memory[PROGRAM_START_OFFSET as usize + start..];
+            let destinations = &mut instance.memory[PROGRAM_START_OFFSET + start..];
             destinations[0..2].copy_from_slice(&bytes);
         }
 
@@ -204,7 +210,7 @@ impl Chip8 {
 
     pub fn load_program(&mut self, path: &str) -> Result<()> {
         let mut file = File::open(path)?;
-        file.read(&mut self.memory[(PROGRAM_START_OFFSET as usize)..])?;
+        file.read_exact(&mut self.memory[PROGRAM_START_OFFSET..])?;
         Ok(())
     }
 
@@ -215,7 +221,7 @@ impl Chip8 {
         let instruction = ((bytes[0] as u16) << 8) | bytes[1] as u16;
 
         self.program_counter += 2;
-        return instruction;
+        instruction
     }
 
     pub fn tick(&mut self) -> Result<()> {
@@ -244,10 +250,7 @@ impl Chip8 {
         if let Some(start) = self.delay_timer_reference {
             let elapsed = start.elapsed();
             let num_ticks_passed = (elapsed.as_secs_f32() * 60.0).round() as u8;
-            self.delay_register = self
-                .delay_register
-                .checked_sub(num_ticks_passed)
-                .unwrap_or(0);
+            self.delay_register = self.delay_register.saturating_sub(num_ticks_passed);
 
             if self.delay_register == 0 {
                 self.delay_timer_reference = None;
@@ -276,7 +279,7 @@ impl Chip8 {
         if let Some(start) = self.sound_timer_reference {
             let elapsed = start.elapsed();
             let num_ticks_passed = (elapsed.as_secs_f32() * 60.0).round() as u8;
-            self.sound_timer = self.sound_timer.checked_sub(num_ticks_passed).unwrap_or(0);
+            self.sound_timer = self.sound_timer.saturating_sub(num_ticks_passed);
 
             self.play_sound();
         }

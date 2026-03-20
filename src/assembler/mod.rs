@@ -48,7 +48,7 @@ mod parse_timer;
 mod primitives;
 
 fn parse_label(input: &str) -> IResult<&str, &str> {
-    let (input, (label, _)) = ((alphanumeric1, tag(":"))).parse(input)?;
+    let (input, (label, _)) = (alphanumeric1, tag(":")).parse(input)?;
 
     Ok((input, label))
 }
@@ -137,8 +137,7 @@ pub fn encode_single_instruction_with_label(instruction: &InstructionWithLabel) 
 }
 
 pub fn encode_instructions(lines: &[AssemblerLine]) -> Vec<u16> {
-    let mut data: Vec<u16> = Vec::new();
-    data.reserve(lines.len());
+    let mut data: Vec<u16> = Vec::with_capacity(lines.len());
 
     let mut label_table: HashMap<String, u16> = HashMap::new();
     let mut second_pass_markers: Vec<(usize, String)> = vec![];
@@ -166,9 +165,8 @@ pub fn encode_instructions(lines: &[AssemblerLine]) -> Vec<u16> {
     }
 
     for (idx, label) in second_pass_markers {
-        let address = label_table
-            .get(&label)
-            .expect(format!("Failed to get address for label: '{}'", label).as_str());
+        let error = format!("Failed to get address for label: '{}'", label);
+        let address = label_table.get(&label).expect(error.as_str());
         data[idx] |= address;
     }
 

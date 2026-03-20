@@ -2,7 +2,7 @@ use crate::{
     Arithmetic, Chip8, ControlFlow, DataTransfer, Drawing, Keyboard, Logical, Timer,
     core::Instruction,
 };
-use std::io::{Error, ErrorKind, Result};
+use std::io::{Error, Result};
 
 impl Chip8 {
     pub fn decode_instruction(&self, opcode: u16) -> Result<Instruction> {
@@ -33,14 +33,13 @@ impl Chip8 {
             return Ok(instruction);
         }
 
-        return Err(Error::new(
-            ErrorKind::Other,
+        Err(Error::other(
             format!(
                 "Unrecognized instruction: {opcode:#06X} {0} ({0:#06X})",
                 self.program_counter - 2,
             )
             .to_owned(),
-        ));
+        ))
     }
 
     fn takes_x_register_and_byte(&self, opcode: u16) -> Option<Instruction> {
@@ -175,9 +174,9 @@ impl Chip8 {
             0xF018 => Some(Instruction::Timer(Timer::LoadRegisterXToSoundTimer {
                 x_register,
             })),
-            0xF01E => Some(Instruction::Arithmetic(
-                Arithmetic::AddRegisterXToIndex { x_register },
-            )),
+            0xF01E => Some(Instruction::Arithmetic(Arithmetic::AddRegisterXToIndex {
+                x_register,
+            })),
             0xF033 => Some(Instruction::DataTransfer(
                 DataTransfer::StoreBcdOfRegisterXAtIndex { x_register },
             )),

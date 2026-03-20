@@ -73,7 +73,7 @@ fn parse_skip_instruction(input: &str) -> IResult<&str, ControlFlow> {
         parse_general_register,
         arguments_separator,
         alt((
-            map(parse_byte_value, |byte| ComparisonRhs::Byte(byte)),
+            map(parse_byte_value, ComparisonRhs::Byte),
             map(parse_general_register, |register| {
                 ComparisonRhs::Register(register)
             }),
