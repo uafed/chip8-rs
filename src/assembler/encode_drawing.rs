@@ -1,9 +1,9 @@
 use crate::Drawing;
 
 pub fn encode_drawing(instruction: &Drawing) -> u16 {
-    match instruction {
-        &Drawing::ClearScreen => 0x00E0,
-        &Drawing::DrawSpriteToScreen {
+    match *instruction {
+        Drawing::ClearScreen => 0x00E0,
+        Drawing::DrawSpriteToScreen {
             x_register,
             y_register,
             n_rows,

@@ -15,7 +15,7 @@ pub struct ToRomFileArgs {
 }
 
 pub fn assemble_to_rom_file(args: &ToRomFileArgs) -> Result<()> {
-    let data = read_to_string(&args.source)?;
+    let data = read_to_string(&args.source)?; 
     let (_, instructions) = parse_instructions(data.as_str())
         .map_err(|error| Error::new(ErrorKind::InvalidData, error.to_string()))?;
     let mut output_file = File::create(&args.output_path)?;

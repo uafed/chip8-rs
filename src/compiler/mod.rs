@@ -106,11 +106,25 @@ pub fn parse_program() {
             Statement::ReturnStatement(ExpressionNode::BinaryNode(BinaryExpression {
                 left: Box::new(ExpressionNode::FunctionCallNode(FunctionCall {
                     name: "fibonacci".to_string(),
-                    arguments: vec![],
+                    arguments: vec![ExpressionNode::BinaryNode(BinaryExpression {
+                        left: Box::new(ExpressionNode::IdentifierNode("value".to_string())),
+                        right: Box::new(ExpressionNode::LiteralNode(Literal {
+                            text: "1".to_string(),
+                            literal_type: Type::Inferred,
+                        })),
+                        operator: BinaryOperator::Minus,
+                    })],
                 })),
                 right: Box::new(ExpressionNode::FunctionCallNode(FunctionCall {
                     name: "fibonacci".to_string(),
-                    arguments: vec![],
+                    arguments: vec![ExpressionNode::BinaryNode(BinaryExpression {
+                        left: Box::new(ExpressionNode::IdentifierNode("value".to_string())),
+                        right: Box::new(ExpressionNode::LiteralNode(Literal {
+                            text: "2".to_string(),
+                            literal_type: Type::Inferred,
+                        })),
+                        operator: BinaryOperator::Minus,
+                    })],
                 })),
                 operator: BinaryOperator::Plus,
             })),

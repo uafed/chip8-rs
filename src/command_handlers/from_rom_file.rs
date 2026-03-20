@@ -175,9 +175,9 @@ pub fn execute_rom_file(args: &RomFileArgs) -> Result<()> {
 
 fn is_hex_key_event(key: KeyEvent) -> Option<u8> {
     let char = key.code.as_char()?.to_ascii_lowercase();
-    return if char.is_digit(16) {
+    if char.is_ascii_hexdigit() {
         Some(char.to_digit(16)? as u8)
     } else {
         None
-    };
+    }
 }
