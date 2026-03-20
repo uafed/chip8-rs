@@ -29,8 +29,8 @@ fn main(): void {
   let value: u8 = fibonacci(10);
   let another: u8 = value + 2;
 
-  loop infinite { 
-    // this is an infinite loop 
+  loop infinite {
+    // this is an infinite loop
   };
 }
 
@@ -49,5 +49,6 @@ function declaration -> "fn" <identifier>(<comma-separated parameter list>): typ
 parameter -> <identifier> ":" <type>
 statement -> variable declaration | if statement | return statement
 if statement -> "if" "(" <expression>  ")" "{" <statements > "}"
+expression -> binary expression | function call | ...
 ...
 ```
