@@ -1,6 +1,6 @@
 use std::{
     io::{BufWriter, Result, Write, stdout},
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use clap::Parser;
@@ -50,6 +50,9 @@ pub fn execute_rom_file(args: &RomFileArgs) -> Result<()> {
         default_hook(info);
     }));
 
+    let mut second_start = Instant::now();
+    let mut num_instructions_executed = 0;
+    let mut instructions_per_sec = 0;
     loop {
         while chip8.is_waiting_for_key_press() {
             match event::read()? {
@@ -75,6 +78,13 @@ pub fn execute_rom_file(args: &RomFileArgs) -> Result<()> {
         }
 
         chip8.tick()?;
+        num_instructions_executed += 1;
+
+        if second_start.elapsed() >= Duration::from_secs(1) {
+            second_start = Instant::now();
+            instructions_per_sec = num_instructions_executed;
+            num_instructions_executed = 0;
+        }
 
         for (y, row) in chip8.frame_buffer.iter().enumerate() {
             stdout.queue(cursor::MoveTo(start_x, start_y + y as u16))?;
@@ -134,6 +144,7 @@ pub fn execute_rom_file(args: &RomFileArgs) -> Result<()> {
                 "ST  = {0:#06X} ({0}) ({1} elapsed)",
                 chip8.sound_timer, sound_timer_elapsed
             ),
+            format!("I/s = {}", instructions_per_sec),
             String::from("-------"),
             String::from("Key states"),
         ];

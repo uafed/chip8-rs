@@ -2,11 +2,12 @@ use nom::{
     IResult, Parser,
     branch::alt,
     bytes::complete::tag,
-    character::complete::{alpha1, space0, space1, u8},
+    character::complete::{alpha1, multispace0, multispace1, space0, space1, u8},
     combinator::{map, recognize},
     multi::{many0, separated_list0},
     sequence::{delimited, pair},
 };
+use rodio::cpal::InputCallbackInfo;
 
 pub enum TopLevelStatement {
     FunctionDecl,
@@ -34,6 +35,7 @@ pub struct FunctionParameter {
 }
 
 #[allow(dead_code, unused)]
+#[derive(Debug)]
 pub struct IfStatement {
     condition: ExpressionNode,
     body: Vec<Statement>,
@@ -77,44 +79,70 @@ pub enum ExpressionNode {
     Binary(BinaryExpressionNode),
 }
 
+#[derive(Debug)]
 pub enum Statement {
     ReturnStatement(ExpressionNode),
     IfStatement(IfStatement),
     Expression(ExpressionNode),
 }
 
-pub fn parse_program(input: &str) -> IResult<&str, ExpressionNode> {
+pub fn parse_program(input: &str) -> IResult<&str, Statement> {
     //TODO: remove
-    let (input, expr) = parse_expression(input)?;
+    let (input, stmt) = parse_statement(input)?;
 
-    Ok((input, expr))
+    Ok((input, stmt))
 }
 
-pub fn parse_top_level_statement() {
-    todo!()
+// pub fn parse_top_level_statement() {
+//     todo!()
+// }
+
+// pub fn parse_function_declaration() {
+//     // "fn", <identifier>, args list, braces, body
+//     todo!()
+// }
+
+// pub fn parse_parameter() {
+//     // Identifier
+//     // Type
+//     todo!()
+// }
+
+pub fn parse_statement(input: &str) -> IResult<&str, Statement> {
+    alt((
+        parse_if_statement,
+        parse_return_statement,
+        map(parse_expression, Statement::Expression),
+    ))
+    .parse(input)
 }
 
-pub fn parse_function_declaration() {
-    // "fn", <identifier>, args list, braces, body
-    todo!()
+pub fn parse_if_statement(input: &str) -> IResult<&str, Statement> {
+    let (input, _) = tag("if").parse(input)?;
+    let (input, (_, condition)) =
+        (space0, delimited(tag("("), parse_expression, tag(")"))).parse(input)?;
+
+    let (input, (_, body)) = (
+        space0,
+        delimited(
+            (tag("{"), multispace0),
+            many0(parse_statement),
+            (multispace0, tag("}")),
+        ),
+    )
+        .parse(input)?;
+
+    Ok((
+        input,
+        Statement::IfStatement(IfStatement { condition, body }),
+    ))
 }
 
-pub fn parse_parameter() {
-    // Identifier
-    // Type
-    todo!()
-}
+pub fn parse_return_statement(input: &str) -> IResult<&str, Statement> {
+    let (input, _) = tag("return").parse(input)?;
+    let (input, (_, expression)) = (multispace1, parse_expression).parse(input)?;
 
-pub fn parse_statement() {
-    // Statements:
-    // If statement
-    // variable declaration
-    // Return statement
-    todo!()
-}
-
-pub fn parse_if_statement(_input: &str) -> IResult<&str, Statement> {
-    todo!()
+    Ok((input, Statement::ReturnStatement(expression)))
 }
 
 pub fn parse_expression(input: &str) -> IResult<&str, ExpressionNode> {

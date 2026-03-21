@@ -15,6 +15,7 @@ pub fn parse_source_file(args: SourceFileArgs) -> Result<()> {
     let source_code = fs::read_to_string(args.path)?;
     let (_, program) = parse_program(source_code.as_str()).expect("Failed to parse program");
 
+    println!("Source code:\n{}\n---------", source_code);
     println!("{:#?}", program);
     Ok(())
 }
